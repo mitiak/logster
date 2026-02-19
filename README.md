@@ -43,6 +43,10 @@ Supported settings:
 ```toml
 no_color = false
 output_style = "compact" # compact | verbose
+theme = "default" # preferred preset selector (alias of color_scheme)
+color_scheme = "default"
+metadata_color = "cyan"
+message_color = "bright_white"
 
 [fields]
 timestamp = "timestamp"
@@ -55,6 +59,17 @@ function = "function"
 line = "line"
 message_fields = ["event", "message", "msg"]
 ```
+
+Preset themes (`theme` or `color_scheme`) include:
+`default`, `dracula`, `nord`, `gruvbox`, `solarized-dark`, `solarized-light`,
+`monokai`, `one-dark`, `tokyo-night`, `catppuccin-mocha`, `github-dark`.
+
+If `metadata_color` / `message_color` are set, they override the preset values.
+
+Supported custom color names:
+`black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`,
+`bright_black`, `bright_red`, `bright_green`, `bright_yellow`, `bright_blue`,
+`bright_magenta`, `bright_cyan`, `bright_white`, `orange`, `pink`, `purple`.
 
 Example in `pyproject.toml`:
 
@@ -73,6 +88,12 @@ Try a config quickly with the demo command:
 
 ```bash
 uv run logster-manage demo --config ./logster.toml
+```
+
+Preview every preset color scheme:
+
+```bash
+uv run logster-manage demo --list-color-schemes
 ```
 
 ## Output format

@@ -3,6 +3,7 @@
 
 no_color = false
 output_style = "compact"  # compact | verbose
+theme = "monokai"  # preset theme name
 
 [fields]
 timestamp = "timestamp"

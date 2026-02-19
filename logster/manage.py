@@ -9,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from logster.config import load_config
+from logster.config import COLOR_SCHEME_PRESETS, load_config
 from logster.format import format_record
 
 
@@ -88,9 +88,34 @@ def _demo(*, config_path: str | None = None, no_color: bool = False) -> int:
             sample,
             use_color=not (config.no_color or no_color),
             output_style=config.output_style,
+            metadata_color=config.metadata_color,
+            message_color=config.message_color,
             fields=config.fields,
         )
     )
+    return 0
+
+
+def _demo_color_schemes() -> int:
+    sample = {
+        "query": "timing",
+        "top_k": 5,
+        "event": "query_endpoint_started",
+        "path": "/query",
+        "timestamp": "2026-02-19T10:12:05.497600Z",
+        "level": "info",
+        "function": "query",
+        "line": 17,
+    }
+    print("Available color schemes:")
+    for scheme_name, (metadata_color, message_color) in sorted(COLOR_SCHEME_PRESETS.items()):
+        preview = format_record(
+            sample,
+            use_color=True,
+            metadata_color=metadata_color,
+            message_color=message_color,
+        )
+        print(f"{scheme_name}: {preview}")
     return 0
 
 
@@ -107,6 +132,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Path to TOML config file (logster.toml or pyproject.toml)",
     )
     demo_parser.add_argument("--no-color", action="store_true", help="Disable colors")
+    demo_parser.add_argument(
+        "--list-color-schemes",
+        action="store_true",
+        help="Show all preset color schemes with a preview",
+    )
 
     clean_parser = sub.add_parser("clean", help="Remove caches and build artifacts")
     clean_parser.add_argument("--dry-run", action="store_true", help="Show what would be removed")
@@ -125,7 +155,10 @@ def main() -> None:
         code = _install()
     elif args.command == "demo":
         try:
-            code = _demo(config_path=args.config, no_color=args.no_color)
+            if args.list_color_schemes:
+                code = _demo_color_schemes()
+            else:
+                code = _demo(config_path=args.config, no_color=args.no_color)
         except (FileNotFoundError, ValueError) as err:
             parser.error(str(err))
     else:

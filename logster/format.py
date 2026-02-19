@@ -6,13 +6,17 @@ from datetime import datetime, timezone
 import re
 from typing import Any
 
-from logster.config import DEFAULT_OUTPUT_STYLE, FieldMapping
+from logster.config import (
+    ANSI_COLOR_CODES,
+    DEFAULT_MESSAGE_COLOR,
+    DEFAULT_METADATA_COLOR,
+    DEFAULT_OUTPUT_STYLE,
+    FieldMapping,
+)
 
 
 _TIME_RE = re.compile(r"(\d{2}:\d{2}:\d{2})")
 ANSI_RESET = "\033[0m"
-ANSI_METADATA = "\033[36m"
-ANSI_MESSAGE = "\033[97m"
 
 
 def format_time(ts: str) -> str:
@@ -32,9 +36,12 @@ def format_time(ts: str) -> str:
     return source[:8]
 
 
-def _colorize(text: str, color_code: str, use_color: bool) -> str:
+def _colorize(text: str, color_name: str, use_color: bool) -> str:
     if not use_color or not text:
         return text
+    color_code = ANSI_COLOR_CODES.get(color_name)
+    if color_code is None:
+        raise ValueError(f"Unsupported color: {color_name}")
     return f"{color_code}{text}{ANSI_RESET}"
 
 
@@ -95,6 +102,8 @@ def format_record(
     *,
     use_color: bool = True,
     output_style: str = DEFAULT_OUTPUT_STYLE,
+    metadata_color: str = DEFAULT_METADATA_COLOR,
+    message_color: str = DEFAULT_MESSAGE_COLOR,
     fields: FieldMapping | None = None,
 ) -> str:
     """Format a JSON log record into a compact one-line representation."""
@@ -150,14 +159,14 @@ def format_record(
             origin_text=origin_text,
         )
 
-    base = _colorize(metadata, ANSI_METADATA, use_color)
+    base = _colorize(metadata, metadata_color, use_color)
     if message:
         if output_style == "compact":
             message_text = message
         else:
             escaped_message = message.replace('"', '\\"')
             message_text = f'msg="{escaped_message}"'
-        colored_message = _colorize(message_text, ANSI_MESSAGE, use_color)
+        colored_message = _colorize(message_text, message_color, use_color)
         if base:
             return f"{base} {colored_message}"
         return colored_message

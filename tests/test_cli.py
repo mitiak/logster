@@ -153,3 +153,83 @@ def test_cli_reads_field_mapping_config(tmp_path: Path):
         proc.stdout.strip()
         == '[10:12:05][WARNING][/search][q="timing"][top_k=7][handler:21] configured'
     )
+
+
+def test_cli_reads_color_scheme_preset_from_config(tmp_path: Path):
+    (tmp_path / "logster.toml").write_text(
+        'color_scheme = "dracula"\n',
+        encoding="utf-8",
+    )
+    data = '{"event":"hello","timestamp":"2026-02-19T10:12:05Z","level":"info"}\n'
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert "\033[95m[10:12:05][INFO]\033[0m" in proc.stdout
+    assert "\033[96mhello\033[0m" in proc.stdout
+
+
+def test_cli_allows_custom_color_overrides(tmp_path: Path):
+    (tmp_path / "logster.toml").write_text(
+        'color_scheme = "dracula"\nmetadata_color = "green"\nmessage_color = "blue"\n',
+        encoding="utf-8",
+    )
+    data = '{"event":"hello","timestamp":"2026-02-19T10:12:05Z","level":"info"}\n'
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert "\033[32m[10:12:05][INFO]\033[0m" in proc.stdout
+    assert "\033[34mhello\033[0m" in proc.stdout
+
+
+def test_cli_reads_theme_from_config(tmp_path: Path):
+    (tmp_path / "logster.toml").write_text(
+        'theme = "nord"\n',
+        encoding="utf-8",
+    )
+    data = '{"event":"hello","timestamp":"2026-02-19T10:12:05Z","level":"info"}\n'
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert "\033[94m[10:12:05][INFO]\033[0m" in proc.stdout
+    assert "\033[37mhello\033[0m" in proc.stdout
+
+
+def test_cli_theme_overrides_color_scheme(tmp_path: Path):
+    (tmp_path / "logster.toml").write_text(
+        'color_scheme = "dracula"\ntheme = "monokai"\n',
+        encoding="utf-8",
+    )
+    data = '{"event":"hello","timestamp":"2026-02-19T10:12:05Z","level":"info"}\n'
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert "\033[32m[10:12:05][INFO]\033[0m" in proc.stdout
+    assert "\033[93mhello\033[0m" in proc.stdout

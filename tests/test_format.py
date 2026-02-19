@@ -61,6 +61,13 @@ def test_color_scheme_uses_distinct_metadata_and_message_colors():
     assert "\033[97mstarted\033[0m" in got
 
 
+def test_format_record_supports_custom_colors():
+    rec = {"level": "info", "event": "started"}
+    got = format_record(rec, metadata_color="red", message_color="bright_blue")
+    assert "\033[31m[INFO]\033[0m" in got
+    assert "\033[94mstarted\033[0m" in got
+
+
 def test_verbose_output_style():
     rec = {
         "event": "query_endpoint_started",

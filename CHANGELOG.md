@@ -8,6 +8,16 @@ Versioning.
 ## [Unreleased]
 
 ### Added
+- Added `theme` as a preset selector in `logster.toml` (alias for
+  `color_scheme`).
+
+### Changed
+- Updated example `logster.toml` and README configuration docs to include
+  `theme`.
+
+## [0.2.0] - 2026-02-19
+
+### Added
 - `logster-manage demo` command to print sample JSON input and its formatted
   one-line output.
 - Added `CHANGELOG.md` with Keep a Changelog structure for tracking updates.
@@ -16,6 +26,13 @@ Versioning.
 - Configurable output style (`compact` or `verbose`) and field mapping via
   `[fields]` including `message_fields`.
 - `logster-manage demo --config ...` support for trying different configurations.
+- Configurable metadata/message colors via config (`metadata_color`,
+  `message_color`) and preset `color_scheme` selection.
+- Added 10 popular color-scheme presets: `dracula`, `nord`, `gruvbox`,
+  `solarized-dark`, `solarized-light`, `monokai`, `one-dark`, `tokyo-night`,
+  `catppuccin-mocha`, and `github-dark`.
+- `logster-manage demo --list-color-schemes` to preview all preset schemes in
+  terminal output.
 
 ### Changed
 - Expanded `README.md` with usage, output format, development commands, and

@@ -11,6 +11,42 @@ from typing import Any
 
 DEFAULT_OUTPUT_STYLE = "compact"
 ALLOWED_OUTPUT_STYLES = {"compact", "verbose"}
+DEFAULT_COLOR_SCHEME = "default"
+ANSI_COLOR_CODES = {
+    "black": "\033[30m",
+    "red": "\033[31m",
+    "green": "\033[32m",
+    "yellow": "\033[33m",
+    "blue": "\033[34m",
+    "magenta": "\033[35m",
+    "cyan": "\033[36m",
+    "white": "\033[37m",
+    "bright_black": "\033[90m",
+    "bright_red": "\033[91m",
+    "bright_green": "\033[92m",
+    "bright_yellow": "\033[93m",
+    "bright_blue": "\033[94m",
+    "bright_magenta": "\033[95m",
+    "bright_cyan": "\033[96m",
+    "bright_white": "\033[97m",
+    "orange": "\033[38;5;208m",
+    "pink": "\033[38;5;213m",
+    "purple": "\033[38;5;141m",
+}
+COLOR_SCHEME_PRESETS = {
+    "default": ("cyan", "bright_white"),
+    "dracula": ("bright_magenta", "bright_cyan"),
+    "nord": ("bright_blue", "white"),
+    "gruvbox": ("yellow", "bright_yellow"),
+    "solarized-dark": ("cyan", "green"),
+    "solarized-light": ("blue", "black"),
+    "monokai": ("green", "bright_yellow"),
+    "one-dark": ("bright_blue", "bright_white"),
+    "tokyo-night": ("bright_cyan", "purple"),
+    "catppuccin-mocha": ("pink", "bright_blue"),
+    "github-dark": ("bright_black", "white"),
+}
+DEFAULT_METADATA_COLOR, DEFAULT_MESSAGE_COLOR = COLOR_SCHEME_PRESETS[DEFAULT_COLOR_SCHEME]
 
 
 @dataclass(frozen=True)
@@ -30,6 +66,10 @@ class FieldMapping:
 class Config:
     no_color: bool = False
     output_style: str = DEFAULT_OUTPUT_STYLE
+    theme: str = DEFAULT_COLOR_SCHEME
+    color_scheme: str = DEFAULT_COLOR_SCHEME
+    metadata_color: str = DEFAULT_METADATA_COLOR
+    message_color: str = DEFAULT_MESSAGE_COLOR
     fields: FieldMapping = FieldMapping()
 
 
@@ -51,6 +91,38 @@ def _normalize(data: dict[str, Any], source: Path) -> Config:
         allowed = ", ".join(sorted(ALLOWED_OUTPUT_STYLES))
         raise ValueError(
             f"'output_style' must be one of [{allowed}] in {source}"
+        )
+
+    raw_theme = data.get("theme")
+    if raw_theme is not None and not isinstance(raw_theme, str):
+        raise ValueError(f"'theme' must be a string in {source}")
+
+    color_scheme = data.get("color_scheme", DEFAULT_COLOR_SCHEME)
+    if not isinstance(color_scheme, str) or color_scheme not in COLOR_SCHEME_PRESETS:
+        allowed = ", ".join(sorted(COLOR_SCHEME_PRESETS))
+        raise ValueError(
+            f"'color_scheme' must be one of [{allowed}] in {source}"
+        )
+    theme = raw_theme if raw_theme is not None else color_scheme
+    if theme not in COLOR_SCHEME_PRESETS:
+        allowed = ", ".join(sorted(COLOR_SCHEME_PRESETS))
+        raise ValueError(
+            f"'theme' must be one of [{allowed}] in {source}"
+        )
+    default_metadata_color, default_message_color = COLOR_SCHEME_PRESETS[theme]
+
+    metadata_color = data.get("metadata_color", default_metadata_color)
+    if not isinstance(metadata_color, str) or metadata_color not in ANSI_COLOR_CODES:
+        allowed = ", ".join(sorted(ANSI_COLOR_CODES))
+        raise ValueError(
+            f"'metadata_color' must be one of [{allowed}] in {source}"
+        )
+
+    message_color = data.get("message_color", default_message_color)
+    if not isinstance(message_color, str) or message_color not in ANSI_COLOR_CODES:
+        allowed = ", ".join(sorted(ANSI_COLOR_CODES))
+        raise ValueError(
+            f"'message_color' must be one of [{allowed}] in {source}"
         )
 
     raw_fields = data.get("fields", {})
@@ -78,7 +150,15 @@ def _normalize(data: dict[str, Any], source: Path) -> Config:
         field_values["message_fields"] = tuple(raw_message_fields)
 
     fields = FieldMapping(**field_values)
-    return Config(no_color=no_color, output_style=output_style, fields=fields)
+    return Config(
+        no_color=no_color,
+        output_style=output_style,
+        theme=theme,
+        color_scheme=color_scheme,
+        metadata_color=metadata_color,
+        message_color=message_color,
+        fields=fields,
+    )
 
 
 def _from_file(path: Path) -> Config:

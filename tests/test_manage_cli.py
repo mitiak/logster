@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from logster import manage
+from logster.config import COLOR_SCHEME_PRESETS
 
 
 def test_manage_info_outputs_metadata(capsys: pytest.CaptureFixture[str]) -> None:
@@ -73,3 +74,13 @@ def test_manage_demo_applies_external_config(
     assert code == 0
     assert 'time=10:12:05 level=INFO path=/query query="timing"' in out
     assert 'origin=query:17 msg="query_endpoint_started"' in out
+
+
+def test_manage_demo_lists_all_color_schemes(capsys: pytest.CaptureFixture[str]) -> None:
+    code = manage._demo_color_schemes()
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "Available color schemes:" in out
+    for scheme_name in COLOR_SCHEME_PRESETS:
+        assert f"{scheme_name}:" in out
+    assert "\033[" in out
