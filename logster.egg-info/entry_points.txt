@@ -1,0 +1,2 @@
+[console_scripts]
+logster = logster.cli:main

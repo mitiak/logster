@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "logster"
+version = "0.1.0"
+description = "Compact formatter for JSON log lines in pipe mode"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "logster" }]
+dependencies = []
+
+[project.scripts]
+logster = "logster.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
