@@ -2,8 +2,12 @@
 # Copy this file to your target project and tweak values as needed.
 
 no_color = false
-output_style = "compact"  # compact | verbose
+output_style = "verbose"  # compact | verbose
 theme = "monokai"  # preset theme name
+metadata_color = "green"
+message_color = "bright_yellow"
+verbose_metadata_key_color = "green"
+verbose_metadata_value_color = "bright_yellow"
 
 [fields]
 timestamp = "timestamp"

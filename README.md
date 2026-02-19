@@ -47,6 +47,8 @@ theme = "default" # preferred preset selector (alias of color_scheme)
 color_scheme = "default"
 metadata_color = "cyan"
 message_color = "bright_white"
+verbose_metadata_key_color = "cyan"
+verbose_metadata_value_color = "bright_white"
 
 [fields]
 timestamp = "timestamp"
@@ -96,15 +98,32 @@ Preview every preset color scheme:
 uv run logster-manage demo --list-color-schemes
 ```
 
+Preview every preset color scheme in verbose mode:
+
+```bash
+uv run logster-manage demo --list-color-schemes --verbose
+```
+
 ## Output format
 
 For JSON records, `logster` emits compact one-liners:
 
 ```text
-[HH:MM:SS][LEVEL][/path][q="..."][top_k=...][function:line] message
+[HH:MM:SS][LEVEL][file.py][function:line] message
 ```
 
 Only available fields are rendered; missing segments are omitted.
+
+Verbose mode emits 2 lines:
+
+```text
+[HH:MM:SS][LEVEL][file.py][function:line] message
+{"all":"non-mandatory fields"}
+```
+
+Line 1 is the main signal (same style as compact, mandatory fields only).
+Line 2 contains every JSON key/value not used by mandatory fields.
+In color mode, metadata keys and values use different dimmed colors.
 
 ## Project management CLI
 

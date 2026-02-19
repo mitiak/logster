@@ -66,7 +66,12 @@ def _install() -> int:
     return _run([sys.executable, "-m", "pip", "install", "-e", "."])
 
 
-def _demo(*, config_path: str | None = None, no_color: bool = False) -> int:
+def _demo(
+    *,
+    config_path: str | None = None,
+    no_color: bool = False,
+    output_style_override: str | None = None,
+) -> int:
     sample = {
         "query": "timing",
         "top_k": 5,
@@ -80,6 +85,7 @@ def _demo(*, config_path: str | None = None, no_color: bool = False) -> int:
         "line": 17,
     }
     config = load_config(config_path=config_path, cwd=PROJECT_ROOT)
+    output_style = output_style_override or config.output_style
     print("Input JSON:")
     print(json.dumps(sample, separators=(",", ":")))
     print("Output:")
@@ -87,16 +93,18 @@ def _demo(*, config_path: str | None = None, no_color: bool = False) -> int:
         format_record(
             sample,
             use_color=not (config.no_color or no_color),
-            output_style=config.output_style,
+            output_style=output_style,
             metadata_color=config.metadata_color,
             message_color=config.message_color,
+            verbose_metadata_key_color=config.verbose_metadata_key_color,
+            verbose_metadata_value_color=config.verbose_metadata_value_color,
             fields=config.fields,
         )
     )
     return 0
 
 
-def _demo_color_schemes() -> int:
+def _demo_color_schemes(*, verbose: bool = False) -> int:
     sample = {
         "query": "timing",
         "top_k": 5,
@@ -112,10 +120,17 @@ def _demo_color_schemes() -> int:
         preview = format_record(
             sample,
             use_color=True,
+            output_style="verbose" if verbose else "compact",
             metadata_color=metadata_color,
             message_color=message_color,
+            verbose_metadata_key_color=metadata_color,
+            verbose_metadata_value_color=message_color,
         )
-        print(f"{scheme_name}: {preview}")
+        preview_lines = preview.splitlines()
+        print(f"{scheme_name}:")
+        for line in preview_lines:
+            print(line)
+        print()
     return 0
 
 
@@ -137,6 +152,11 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Show all preset color schemes with a preview",
     )
+    demo_parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Use verbose output style for demo and color-scheme previews",
+    )
 
     clean_parser = sub.add_parser("clean", help="Remove caches and build artifacts")
     clean_parser.add_argument("--dry-run", action="store_true", help="Show what would be removed")
@@ -156,9 +176,13 @@ def main() -> None:
     elif args.command == "demo":
         try:
             if args.list_color_schemes:
-                code = _demo_color_schemes()
+                code = _demo_color_schemes(verbose=args.verbose)
             else:
-                code = _demo(config_path=args.config, no_color=args.no_color)
+                code = _demo(
+                    config_path=args.config,
+                    no_color=args.no_color,
+                    output_style_override="verbose" if args.verbose else None,
+                )
         except (FileNotFoundError, ValueError) as err:
             parser.error(str(err))
     else:

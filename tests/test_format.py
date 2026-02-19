@@ -18,7 +18,7 @@ def test_format_record_example():
     got = format_record(rec, use_color=False)
     assert (
         got
-        == '[10:12:05][INFO][/query][q="timing"][top_k=5][query:17] query_endpoint_started'
+        == "[10:12:05][INFO][query.py][query:17] query_endpoint_started"
     )
 
 
@@ -40,7 +40,7 @@ def test_missing_timestamp_omits_time_segment():
     rec = {"event": "started", "level": "info", "path": "/query"}
     got = format_record(rec, use_color=False)
     assert not got.startswith("[10:")
-    assert got == "[INFO][/query] started"
+    assert got == "[INFO] started"
 
 
 def test_missing_line_omits_location_segment():
@@ -76,7 +76,7 @@ def test_verbose_output_style():
         "level": "info",
     }
     got = format_record(rec, use_color=False, output_style="verbose")
-    assert got == 'time=10:12:05 level=INFO path=/query msg="query_endpoint_started"'
+    assert got == "[10:12:05][INFO] query_endpoint_started\n{\"path\":\"/query\"}"
 
 
 def test_custom_field_mapping():
@@ -104,4 +104,17 @@ def test_custom_field_mapping():
             message_fields=("text",),
         ),
     )
-    assert got == '[10:12:05][WARNING][/search][q="timing"][top_k=3][query:11] hello'
+    assert got == "[10:12:05][WARNING][query:11] hello"
+
+
+def test_verbose_metadata_line_uses_subtle_color():
+    rec = {
+        "event": "started",
+        "timestamp": "2026-02-19T10:12:05Z",
+        "level": "info",
+        "path": "/query",
+    }
+    got = format_record(rec, output_style="verbose")
+    assert "\033[36m[10:12:05][INFO]\033[0m \033[97mstarted\033[0m" in got
+    assert "\033[2m\033[36m\"path\"\033[0m" in got
+    assert "\033[2m\033[97m\"/query\"\033[0m" in got

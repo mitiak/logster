@@ -56,8 +56,8 @@ def test_manage_demo_prints_expected_output(capsys: pytest.CaptureFixture[str]) 
     assert code == 0
     assert "Input JSON:" in out
     assert "Output:" in out
-    assert '\033[36m[10:12:05][INFO][/query][q="timing"][top_k=5][query:17]\033[0m' in out
-    assert "\033[97mquery_endpoint_started\033[0m" in out
+    assert "[10:12:05][INFO][query.py][query:17]" in out
+    assert "query_endpoint_started" in out
 
 
 def test_manage_demo_applies_external_config(
@@ -72,8 +72,11 @@ def test_manage_demo_applies_external_config(
     code = manage._demo(config_path=str(config_path))
     out = capsys.readouterr().out
     assert code == 0
-    assert 'time=10:12:05 level=INFO path=/query query="timing"' in out
-    assert 'origin=query:17 msg="query_endpoint_started"' in out
+    assert "[10:12:05][INFO][query.py][query:17] query_endpoint_started" in out
+    assert (
+        '{"path":"/query","query":"timing","request_id":"5342fb6b-8ff0-4d9d-84a5-1f6b0e098528","top_k":5}'
+        in out
+    )
 
 
 def test_manage_demo_lists_all_color_schemes(capsys: pytest.CaptureFixture[str]) -> None:
@@ -82,5 +85,17 @@ def test_manage_demo_lists_all_color_schemes(capsys: pytest.CaptureFixture[str])
     assert code == 0
     assert "Available color schemes:" in out
     for scheme_name in COLOR_SCHEME_PRESETS:
-        assert f"{scheme_name}:" in out
+        assert f"{scheme_name}:\n" in out
     assert "\033[" in out
+    assert "\n\n" in out
+
+
+def test_manage_demo_lists_all_color_schemes_in_verbose_mode(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    code = manage._demo_color_schemes(verbose=True)
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "Available color schemes:" in out
+    assert "\n{" in out
+    assert "\n\n" in out

@@ -5,7 +5,7 @@ from pathlib import Path
 from logster import cli
 
 
-def test_cli_formats_json_and_passthrough_non_json():
+def test_cli_formats_json_and_passthrough_non_json(tmp_path: Path):
     json_line = (
         '{"query":"timing","top_k":5,"event":"query_endpoint_started",'
         '"request_id":"5342fb6b-8ff0-4d9d-84a5-1f6b0e098528","path":"/query",'
@@ -21,12 +21,13 @@ def test_cli_formats_json_and_passthrough_non_json():
         capture_output=True,
         text=True,
         check=True,
+        cwd=tmp_path,
     )
 
     out_lines = proc.stdout.splitlines()
     assert (
         out_lines[0]
-        == '[10:12:05][INFO][/query][q="timing"][top_k=5][query:17] query_endpoint_started'
+        == "[10:12:05][INFO][query.py][query:17] query_endpoint_started"
     )
     assert out_lines[1] == plain_line
 
@@ -116,7 +117,7 @@ def test_cli_reads_output_style_verbose_config(tmp_path: Path):
         cwd=tmp_path,
     )
 
-    assert proc.stdout.strip() == 'time=10:12:05 level=INFO msg="hello world"'
+    assert proc.stdout.strip() == "[10:12:05][INFO] hello world\n{}"
 
 
 def test_cli_reads_field_mapping_config(tmp_path: Path):
@@ -151,7 +152,7 @@ def test_cli_reads_field_mapping_config(tmp_path: Path):
 
     assert (
         proc.stdout.strip()
-        == '[10:12:05][WARNING][/search][q="timing"][top_k=7][handler:21] configured'
+        == "[10:12:05][WARNING][handler:21] configured"
     )
 
 

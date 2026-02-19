@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import json
 import re
 from typing import Any
 
@@ -17,6 +18,7 @@ from logster.config import (
 
 _TIME_RE = re.compile(r"(\d{2}:\d{2}:\d{2})")
 ANSI_RESET = "\033[0m"
+ANSI_DIM = "\033[2m"
 
 
 def format_time(ts: str) -> str:
@@ -36,22 +38,21 @@ def format_time(ts: str) -> str:
     return source[:8]
 
 
-def _colorize(text: str, color_name: str, use_color: bool) -> str:
+def _colorize(text: str, color_name: str, use_color: bool, *, dim: bool = False) -> str:
     if not use_color or not text:
         return text
     color_code = ANSI_COLOR_CODES.get(color_name)
     if color_code is None:
         raise ValueError(f"Unsupported color: {color_name}")
-    return f"{color_code}{text}{ANSI_RESET}"
+    prefix = f"{ANSI_DIM}{color_code}" if dim else color_code
+    return f"{prefix}{text}{ANSI_RESET}"
 
 
 def _format_compact(
     *,
     time_text: str | None,
     level_text: str | None,
-    path_text: str | None,
-    query_text: str | None,
-    top_k_text: str | None,
+    file_text: str | None,
     origin_text: str | None,
 ) -> str:
     segments: list[str] = []
@@ -59,42 +60,46 @@ def _format_compact(
         segments.append(f"[{time_text}]")
     if level_text is not None:
         segments.append(f"[{level_text}]")
-    if path_text is not None:
-        segments.append(f"[{path_text}]")
-    if query_text is not None:
-        escaped_query = query_text.replace('"', '\\"')
-        segments.append(f'[q="{escaped_query}"]')
-    if top_k_text is not None:
-        segments.append(f"[top_k={top_k_text}]")
+    if file_text is not None:
+        segments.append(f"[{file_text}]")
     if origin_text is not None:
         segments.append(f"[{origin_text}]")
     return "".join(segments)
 
 
-def _format_verbose(
+def _format_metadata_json(
+    value: Any,
     *,
-    time_text: str | None,
-    level_text: str | None,
-    path_text: str | None,
-    query_text: str | None,
-    top_k_text: str | None,
-    origin_text: str | None,
+    use_color: bool,
+    key_color: str,
+    value_color: str,
 ) -> str:
-    segments: list[str] = []
-    if time_text is not None:
-        segments.append(f"time={time_text}")
-    if level_text is not None:
-        segments.append(f"level={level_text}")
-    if path_text is not None:
-        segments.append(f"path={path_text}")
-    if query_text is not None:
-        escaped_query = query_text.replace('"', '\\"')
-        segments.append(f'query="{escaped_query}"')
-    if top_k_text is not None:
-        segments.append(f"top_k={top_k_text}")
-    if origin_text is not None:
-        segments.append(f"origin={origin_text}")
-    return " ".join(segments)
+    if isinstance(value, dict):
+        parts: list[str] = []
+        for key in sorted(value):
+            key_json = json.dumps(key, separators=(",", ":"))
+            key_token = _colorize(key_json, key_color, use_color, dim=True)
+            value_token = _format_metadata_json(
+                value[key],
+                use_color=use_color,
+                key_color=key_color,
+                value_color=value_color,
+            )
+            parts.append(f"{key_token}:{value_token}")
+        return "{" + ",".join(parts) + "}"
+    if isinstance(value, list):
+        inner = ",".join(
+            _format_metadata_json(
+                item,
+                use_color=use_color,
+                key_color=key_color,
+                value_color=value_color,
+            )
+            for item in value
+        )
+        return "[" + inner + "]"
+    rendered = json.dumps(value, separators=(",", ":"))
+    return _colorize(rendered, value_color, use_color, dim=True)
 
 
 def format_record(
@@ -104,6 +109,8 @@ def format_record(
     output_style: str = DEFAULT_OUTPUT_STYLE,
     metadata_color: str = DEFAULT_METADATA_COLOR,
     message_color: str = DEFAULT_MESSAGE_COLOR,
+    verbose_metadata_key_color: str = DEFAULT_METADATA_COLOR,
+    verbose_metadata_value_color: str = DEFAULT_MESSAGE_COLOR,
     fields: FieldMapping | None = None,
 ) -> str:
     """Format a JSON log record into a compact one-line representation."""
@@ -117,57 +124,60 @@ def format_record(
     level = rec.get(mapping.level)
     level_text = str(level).upper() if level is not None else None
 
-    path = rec.get(mapping.path)
-    path_text = str(path) if path is not None else None
-
-    query = rec.get(mapping.query)
-    query_text = str(query) if query is not None else None
-
-    top_k = rec.get(mapping.top_k)
-    top_k_text = str(top_k) if top_k is not None else None
-
     line = rec.get(mapping.line)
     function = rec.get(mapping.function)
     file_name = rec.get(mapping.file)
+    file_text = str(file_name) if file_name is not None else None
     origin_text: str | None = None
     if line is not None and (function is not None or file_name is not None):
         origin = function if function is not None else file_name
         origin_text = f"{origin}:{line}"
 
     message = None
+    message_key: str | None = None
     for key in mapping.message_fields:
         if rec.get(key) is not None:
             message = str(rec[key])
+            message_key = key
             break
 
-    if output_style == "compact":
-        metadata = _format_compact(
-            time_text=time_text,
-            level_text=level_text,
-            path_text=path_text,
-            query_text=query_text,
-            top_k_text=top_k_text,
-            origin_text=origin_text,
-        )
-    else:
-        metadata = _format_verbose(
-            time_text=time_text,
-            level_text=level_text,
-            path_text=path_text,
-            query_text=query_text,
-            top_k_text=top_k_text,
-            origin_text=origin_text,
-        )
-
-    base = _colorize(metadata, metadata_color, use_color)
+    first_line = _format_compact(
+        time_text=time_text,
+        level_text=level_text,
+        file_text=file_text,
+        origin_text=origin_text,
+    )
+    base = _colorize(first_line, metadata_color, use_color)
     if message:
-        if output_style == "compact":
-            message_text = message
-        else:
-            escaped_message = message.replace('"', '\\"')
-            message_text = f'msg="{escaped_message}"'
+        message_text = message
         colored_message = _colorize(message_text, message_color, use_color)
         if base:
-            return f"{base} {colored_message}"
-        return colored_message
-    return base
+            main_line = f"{base} {colored_message}"
+        else:
+            main_line = colored_message
+    else:
+        main_line = base
+
+    if output_style == "compact":
+        return main_line
+
+    mandatory_keys = {
+        mapping.timestamp,
+        mapping.level,
+        mapping.file,
+        mapping.function,
+        mapping.line,
+    }
+    if message_key is not None:
+        mandatory_keys.add(message_key)
+
+    metadata_obj = {key: value for key, value in rec.items() if key not in mandatory_keys}
+    metadata_line = _format_metadata_json(
+        metadata_obj,
+        use_color=use_color,
+        key_color=verbose_metadata_key_color,
+        value_color=verbose_metadata_value_color,
+    )
+    if main_line:
+        return f"{main_line}\n{metadata_line}"
+    return metadata_line

@@ -14,6 +14,9 @@ Versioning.
 ### Changed
 - Updated example `logster.toml` and README configuration docs to include
   `theme`.
+- Verbose metadata line now outputs raw JSON only (without `metadata:` prefix).
+- Verbose metadata keys and values now use different configurable colors.
+- Added `--verbose` option to `logster-manage demo --list-color-schemes`.
 
 ## [0.2.0] - 2026-02-19
 
@@ -39,6 +42,9 @@ Versioning.
   documentation maintenance rules.
 - `--no-color` is now consistently applied during formatting, and can be set
   via config (`no_color = true`).
+- Compact output style now emits `[time][level][file][function:line] message`.
+- Verbose output now emits 2 lines: main compact-style mandatory fields + a
+  JSON line containing all non-mandatory keys.
 
 ## [0.1.0] - 2026-02-19
 

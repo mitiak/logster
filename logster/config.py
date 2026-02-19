@@ -47,6 +47,8 @@ COLOR_SCHEME_PRESETS = {
     "github-dark": ("bright_black", "white"),
 }
 DEFAULT_METADATA_COLOR, DEFAULT_MESSAGE_COLOR = COLOR_SCHEME_PRESETS[DEFAULT_COLOR_SCHEME]
+DEFAULT_VERBOSE_METADATA_KEY_COLOR = DEFAULT_METADATA_COLOR
+DEFAULT_VERBOSE_METADATA_VALUE_COLOR = DEFAULT_MESSAGE_COLOR
 
 
 @dataclass(frozen=True)
@@ -70,6 +72,8 @@ class Config:
     color_scheme: str = DEFAULT_COLOR_SCHEME
     metadata_color: str = DEFAULT_METADATA_COLOR
     message_color: str = DEFAULT_MESSAGE_COLOR
+    verbose_metadata_key_color: str = DEFAULT_VERBOSE_METADATA_KEY_COLOR
+    verbose_metadata_value_color: str = DEFAULT_VERBOSE_METADATA_VALUE_COLOR
     fields: FieldMapping = FieldMapping()
 
 
@@ -125,6 +129,32 @@ def _normalize(data: dict[str, Any], source: Path) -> Config:
             f"'message_color' must be one of [{allowed}] in {source}"
         )
 
+    verbose_metadata_key_color = data.get(
+        "verbose_metadata_key_color",
+        metadata_color,
+    )
+    if (
+        not isinstance(verbose_metadata_key_color, str)
+        or verbose_metadata_key_color not in ANSI_COLOR_CODES
+    ):
+        allowed = ", ".join(sorted(ANSI_COLOR_CODES))
+        raise ValueError(
+            f"'verbose_metadata_key_color' must be one of [{allowed}] in {source}"
+        )
+
+    verbose_metadata_value_color = data.get(
+        "verbose_metadata_value_color",
+        message_color,
+    )
+    if (
+        not isinstance(verbose_metadata_value_color, str)
+        or verbose_metadata_value_color not in ANSI_COLOR_CODES
+    ):
+        allowed = ", ".join(sorted(ANSI_COLOR_CODES))
+        raise ValueError(
+            f"'verbose_metadata_value_color' must be one of [{allowed}] in {source}"
+        )
+
     raw_fields = data.get("fields", {})
     if not isinstance(raw_fields, dict):
         raise ValueError(f"'fields' must be a table in {source}")
@@ -157,6 +187,8 @@ def _normalize(data: dict[str, Any], source: Path) -> Config:
         color_scheme=color_scheme,
         metadata_color=metadata_color,
         message_color=message_color,
+        verbose_metadata_key_color=verbose_metadata_key_color,
+        verbose_metadata_value_color=verbose_metadata_value_color,
         fields=fields,
     )
 
