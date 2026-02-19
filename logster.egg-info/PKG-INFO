@@ -134,7 +134,7 @@ uv run logster --help
 If `logster` is not published yet, install from git:
 
 ```bash
-uv add "logster @ git+https://github.com/<org>/<repo>.git"
+uv add "logster @ git+https://github.com/mitiak/logster.git"
 ```
 
 Run your app logs through `logster` inside that project's environment:

@@ -1,6 +1,8 @@
 import subprocess
 import sys
 
+from logster import cli
+
 
 def test_cli_formats_json_and_passthrough_non_json():
     json_line = (
@@ -26,3 +28,14 @@ def test_cli_formats_json_and_passthrough_non_json():
         == '[10:12:05][INFO][/query][q="timing"][top_k=5][query:17] query_endpoint_started'
     )
     assert out_lines[1] == plain_line
+
+
+def test_cli_exits_quietly_on_keyboard_interrupt(monkeypatch):
+    class InterruptingStdin:
+        def __iter__(self):
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr(sys, "argv", ["logster", "--no-color"])
+    monkeypatch.setattr(sys, "stdin", InterruptingStdin())
+
+    cli.main()
