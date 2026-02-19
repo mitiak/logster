@@ -10,6 +10,7 @@ Versioning.
 ### Added
 - `logster-manage demo` command to print sample JSON input and its formatted
   one-line output.
+- Added `CHANGELOG.md` with Keep a Changelog structure for tracking updates.
 
 ### Changed
 - Expanded `README.md` with usage, output format, development commands, and
