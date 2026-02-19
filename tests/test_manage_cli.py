@@ -47,3 +47,15 @@ def test_manage_test_uses_pytest_when_uv_missing(monkeypatch: pytest.MonkeyPatch
 
     assert code == 0
     assert called == [[manage.sys.executable, "-m", "pytest", "-q"]]
+
+
+def test_manage_demo_prints_expected_output(capsys: pytest.CaptureFixture[str]) -> None:
+    code = manage._demo()
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "Input JSON:" in out
+    assert "Output:" in out
+    assert (
+        '[10:12:05][INFO][/query][q="timing"][top_k=5][query:17] query_endpoint_started'
+        in out
+    )

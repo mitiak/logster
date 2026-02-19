@@ -47,8 +47,15 @@ This project includes `logster-manage` for local development tasks:
 uv run logster-manage info
 uv run logster-manage test
 uv run logster-manage install
+uv run logster-manage demo
 uv run logster-manage clean
 uv run logster-manage clean --dry-run
+```
+
+Demo output:
+
+```bash
+uv run logster-manage demo
 ```
 
 ## Development

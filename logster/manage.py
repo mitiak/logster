@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+from logster.format import format_record
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -62,6 +65,26 @@ def _install() -> int:
     return _run([sys.executable, "-m", "pip", "install", "-e", "."])
 
 
+def _demo() -> int:
+    sample = {
+        "query": "timing",
+        "top_k": 5,
+        "event": "query_endpoint_started",
+        "request_id": "5342fb6b-8ff0-4d9d-84a5-1f6b0e098528",
+        "path": "/query",
+        "timestamp": "2026-02-19T10:12:05.497600Z",
+        "level": "info",
+        "file": "query.py",
+        "function": "query",
+        "line": 17,
+    }
+    print("Input JSON:")
+    print(json.dumps(sample, separators=(",", ":")))
+    print("Output:")
+    print(format_record(sample))
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="logster-manage")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -69,6 +92,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sub.add_parser("info", help="Show project information")
     sub.add_parser("test", help="Run test suite")
     sub.add_parser("install", help="Install project in editable mode")
+    sub.add_parser("demo", help="Print sample input and formatted output")
 
     clean_parser = sub.add_parser("clean", help="Remove caches and build artifacts")
     clean_parser.add_argument("--dry-run", action="store_true", help="Show what would be removed")
@@ -85,6 +109,8 @@ def main() -> None:
         code = _test()
     elif args.command == "install":
         code = _install()
+    elif args.command == "demo":
+        code = _demo()
     else:
         code = _clean(dry_run=args.dry_run)
 
