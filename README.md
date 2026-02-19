@@ -72,6 +72,76 @@ Run tests:
 uv run --with pytest pytest -q
 ```
 
+## Publish workflow
+
+Use this when you want to release new changes:
+
+1. Update `CHANGELOG.md` under `Unreleased`.
+2. Bump `version` in `pyproject.toml`.
+3. Run tests:
+
+```bash
+uv run --with pytest pytest -q
+```
+
+4. Build distribution artifacts:
+
+```bash
+uv build
+```
+
+5. Publish to PyPI (or another index):
+
+```bash
+uv publish
+# or for TestPyPI:
+uv publish --publish-url https://test.pypi.org/legacy/
+```
+
+6. Move `Unreleased` notes into a new version section in `CHANGELOG.md`.
+7. Commit, tag, and push:
+
+```bash
+git add CHANGELOG.md README.md pyproject.toml
+git commit -m "release: vX.Y.Z"
+git tag vX.Y.Z
+git push && git push --tags
+```
+
+`uv publish` expects credentials (for example `UV_PUBLISH_TOKEN`) to be set in
+your environment.
+
+## Use in other projects (separate uv environments)
+
+Every project can keep its own isolated `.venv` and still use `logster`.
+
+Install as a dependency in another project:
+
+```bash
+cd /path/to/other-project
+uv add logster
+uv run logster --help
+```
+
+If `logster` is not published yet, install from git:
+
+```bash
+uv add "logster @ git+https://github.com/<org>/<repo>.git"
+```
+
+Run your app logs through `logster` inside that project's environment:
+
+```bash
+uv run your_app 2>&1 | uv run logster
+```
+
+If you want one global tool install (separate from project envs):
+
+```bash
+uv tool install logster
+logster --help
+```
+
 ## Documentation maintenance
 
 - Keep `README.md` aligned with current CLI behavior and examples.
