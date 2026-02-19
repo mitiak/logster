@@ -8,25 +8,25 @@ It focuses on JSON-per-line logs and keeps non-JSON lines unchanged.
 ## Install
 
 ```bash
-pip install .
+uv tool install .
 ```
 
 ## Usage
 
 ```bash
-your_app 2>&1 | logster
+your_app 2>&1 | uv run logster
 ```
 
 Example with uvicorn:
 
 ```bash
-uvicorn app:app --reload 2>&1 | logster
+uv run uvicorn app:app --reload 2>&1 | uv run logster
 ```
 
 Disable colors (MVP-safe flag):
 
 ```bash
-your_app 2>&1 | logster --no-color
+your_app 2>&1 | uv run logster --no-color
 ```
 
 ## Output format
@@ -44,14 +44,20 @@ Only available fields are rendered; missing segments are omitted.
 This project includes `logster-manage` for local development tasks:
 
 ```bash
-logster-manage info
-logster-manage test
-logster-manage install
-logster-manage clean
-logster-manage clean --dry-run
+uv run logster-manage info
+uv run logster-manage test
+uv run logster-manage install
+uv run logster-manage clean
+uv run logster-manage clean --dry-run
 ```
 
 ## Development
+
+Create/sync the local environment:
+
+```bash
+uv sync
+```
 
 Run tests:
 
