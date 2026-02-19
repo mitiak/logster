@@ -9,6 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from logster.config import load_config
 from logster.format import format_record
 
 
@@ -65,7 +66,7 @@ def _install() -> int:
     return _run([sys.executable, "-m", "pip", "install", "-e", "."])
 
 
-def _demo() -> int:
+def _demo(*, config_path: str | None = None, no_color: bool = False) -> int:
     sample = {
         "query": "timing",
         "top_k": 5,
@@ -78,10 +79,18 @@ def _demo() -> int:
         "function": "query",
         "line": 17,
     }
+    config = load_config(config_path=config_path, cwd=PROJECT_ROOT)
     print("Input JSON:")
     print(json.dumps(sample, separators=(",", ":")))
     print("Output:")
-    print(format_record(sample))
+    print(
+        format_record(
+            sample,
+            use_color=not (config.no_color or no_color),
+            output_style=config.output_style,
+            fields=config.fields,
+        )
+    )
     return 0
 
 
@@ -92,7 +101,12 @@ def _build_parser() -> argparse.ArgumentParser:
     sub.add_parser("info", help="Show project information")
     sub.add_parser("test", help="Run test suite")
     sub.add_parser("install", help="Install project in editable mode")
-    sub.add_parser("demo", help="Print sample input and formatted output")
+    demo_parser = sub.add_parser("demo", help="Print sample input and formatted output")
+    demo_parser.add_argument(
+        "--config",
+        help="Path to TOML config file (logster.toml or pyproject.toml)",
+    )
+    demo_parser.add_argument("--no-color", action="store_true", help="Disable colors")
 
     clean_parser = sub.add_parser("clean", help="Remove caches and build artifacts")
     clean_parser.add_argument("--dry-run", action="store_true", help="Show what would be removed")
@@ -110,7 +124,10 @@ def main() -> None:
     elif args.command == "install":
         code = _install()
     elif args.command == "demo":
-        code = _demo()
+        try:
+            code = _demo(config_path=args.config, no_color=args.no_color)
+        except (FileNotFoundError, ValueError) as err:
+            parser.error(str(err))
     else:
         code = _clean(dry_run=args.dry_run)
 

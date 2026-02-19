@@ -42,6 +42,18 @@ Supported settings:
 
 ```toml
 no_color = false
+output_style = "compact" # compact | verbose
+
+[fields]
+timestamp = "timestamp"
+level = "level"
+path = "path"
+query = "query"
+top_k = "top_k"
+file = "file"
+function = "function"
+line = "line"
+message_fields = ["event", "message", "msg"]
 ```
 
 Example in `pyproject.toml`:
@@ -55,6 +67,12 @@ Example standalone file (`logster.toml`):
 
 ```toml
 no_color = true
+```
+
+Try a config quickly with the demo command:
+
+```bash
+uv run logster-manage demo --config ./logster.toml
 ```
 
 ## Output format

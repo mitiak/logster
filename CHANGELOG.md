@@ -13,6 +13,9 @@ Versioning.
 - Added `CHANGELOG.md` with Keep a Changelog structure for tracking updates.
 - External config loading via `logster.toml`, `pyproject.toml` (`[tool.logster]`),
   `LOGSTER_CONFIG`, or `--config`.
+- Configurable output style (`compact` or `verbose`) and field mapping via
+  `[fields]` including `message_fields`.
+- `logster-manage demo --config ...` support for trying different configurations.
 
 ### Changed
 - Expanded `README.md` with usage, output format, development commands, and

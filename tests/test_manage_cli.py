@@ -57,3 +57,19 @@ def test_manage_demo_prints_expected_output(capsys: pytest.CaptureFixture[str]) 
     assert "Output:" in out
     assert '\033[36m[10:12:05][INFO][/query][q="timing"][top_k=5][query:17]\033[0m' in out
     assert "\033[97mquery_endpoint_started\033[0m" in out
+
+
+def test_manage_demo_applies_external_config(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    config_path = tmp_path / "demo.toml"
+    config_path.write_text(
+        "no_color = true\noutput_style = \"verbose\"\n",
+        encoding="utf-8",
+    )
+
+    code = manage._demo(config_path=str(config_path))
+    out = capsys.readouterr().out
+    assert code == 0
+    assert 'time=10:12:05 level=INFO path=/query query="timing"' in out
+    assert 'origin=query:17 msg="query_endpoint_started"' in out

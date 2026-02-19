@@ -98,3 +98,58 @@ def test_cli_prefers_logster_toml_over_pyproject(tmp_path: Path):
 
     assert "\x1b[" not in proc.stdout
     assert proc.stdout.strip() == "[10:12:05][INFO] hello"
+
+
+def test_cli_reads_output_style_verbose_config(tmp_path: Path):
+    (tmp_path / "logster.toml").write_text(
+        "no_color = true\noutput_style = \"verbose\"\n",
+        encoding="utf-8",
+    )
+    data = '{"event":"hello world","timestamp":"2026-02-19T10:12:05Z","level":"info"}\n'
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert proc.stdout.strip() == 'time=10:12:05 level=INFO msg="hello world"'
+
+
+def test_cli_reads_field_mapping_config(tmp_path: Path):
+    (tmp_path / "logster.toml").write_text(
+        (
+            "no_color = true\n"
+            "[fields]\n"
+            "timestamp = \"ts\"\n"
+            "level = \"severity\"\n"
+            "path = \"route\"\n"
+            "query = \"q\"\n"
+            "top_k = \"k\"\n"
+            "function = \"fn\"\n"
+            "line = \"ln\"\n"
+            "message_fields = [\"text\"]\n"
+        ),
+        encoding="utf-8",
+    )
+    data = (
+        '{"ts":"2026-02-19T10:12:05Z","severity":"warning","route":"/search",'
+        '"q":"timing","k":7,"fn":"handler","ln":21,"text":"configured"}\n'
+    )
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert (
+        proc.stdout.strip()
+        == '[10:12:05][WARNING][/search][q="timing"][top_k=7][handler:21] configured'
+    )

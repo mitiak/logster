@@ -9,9 +9,28 @@ import tomllib
 from typing import Any
 
 
+DEFAULT_OUTPUT_STYLE = "compact"
+ALLOWED_OUTPUT_STYLES = {"compact", "verbose"}
+
+
+@dataclass(frozen=True)
+class FieldMapping:
+    timestamp: str = "timestamp"
+    level: str = "level"
+    path: str = "path"
+    query: str = "query"
+    top_k: str = "top_k"
+    file: str = "file"
+    function: str = "function"
+    line: str = "line"
+    message_fields: tuple[str, ...] = ("event", "message", "msg")
+
+
 @dataclass(frozen=True)
 class Config:
     no_color: bool = False
+    output_style: str = DEFAULT_OUTPUT_STYLE
+    fields: FieldMapping = FieldMapping()
 
 
 def _read_toml(path: Path) -> dict[str, Any]:
@@ -26,7 +45,40 @@ def _normalize(data: dict[str, Any], source: Path) -> Config:
     no_color = data.get("no_color", False)
     if not isinstance(no_color, bool):
         raise ValueError(f"'no_color' must be a boolean in {source}")
-    return Config(no_color=no_color)
+
+    output_style = data.get("output_style", DEFAULT_OUTPUT_STYLE)
+    if not isinstance(output_style, str) or output_style not in ALLOWED_OUTPUT_STYLES:
+        allowed = ", ".join(sorted(ALLOWED_OUTPUT_STYLES))
+        raise ValueError(
+            f"'output_style' must be one of [{allowed}] in {source}"
+        )
+
+    raw_fields = data.get("fields", {})
+    if not isinstance(raw_fields, dict):
+        raise ValueError(f"'fields' must be a table in {source}")
+
+    field_values = dict(FieldMapping().__dict__)
+    for key in ("timestamp", "level", "path", "query", "top_k", "file", "function", "line"):
+        if key in raw_fields:
+            value = raw_fields[key]
+            if not isinstance(value, str) or not value:
+                raise ValueError(f"'fields.{key}' must be a non-empty string in {source}")
+            field_values[key] = value
+
+    if "message_fields" in raw_fields:
+        raw_message_fields = raw_fields["message_fields"]
+        if (
+            not isinstance(raw_message_fields, list)
+            or not raw_message_fields
+            or any(not isinstance(item, str) or not item for item in raw_message_fields)
+        ):
+            raise ValueError(
+                f"'fields.message_fields' must be a non-empty list of strings in {source}"
+            )
+        field_values["message_fields"] = tuple(raw_message_fields)
+
+    fields = FieldMapping(**field_values)
+    return Config(no_color=no_color, output_style=output_style, fields=fields)
 
 
 def _from_file(path: Path) -> Config:

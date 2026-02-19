@@ -37,7 +37,9 @@ def main() -> None:
                     output += "\n"
             else:
                 if isinstance(parsed, dict):
-                    output = f"{format_record(parsed, use_color=use_color)}\n"
+                    output = (
+                        f"{format_record(parsed, use_color=use_color, output_style=config.output_style, fields=config.fields)}\n"
+                    )
                 else:
                     output = raw_line
                     if not output.endswith("\n"):

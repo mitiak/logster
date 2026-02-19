@@ -2,3 +2,15 @@
 # Copy this file to your target project and tweak values as needed.
 
 no_color = false
+output_style = "compact"  # compact | verbose
+
+[fields]
+timestamp = "timestamp"
+level = "level"
+path = "path"
+query = "query"
+top_k = "top_k"
+file = "file"
+function = "function"
+line = "line"
+message_fields = ["event", "message", "msg"]
