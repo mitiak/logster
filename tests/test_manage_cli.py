@@ -55,7 +55,5 @@ def test_manage_demo_prints_expected_output(capsys: pytest.CaptureFixture[str]) 
     assert code == 0
     assert "Input JSON:" in out
     assert "Output:" in out
-    assert (
-        '[10:12:05][INFO][/query][q="timing"][top_k=5][query:17] query_endpoint_started'
-        in out
-    )
+    assert '\033[36m[10:12:05][INFO][/query][q="timing"][top_k=5][query:17]\033[0m' in out
+    assert "\033[97mquery_endpoint_started\033[0m" in out

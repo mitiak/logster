@@ -12,7 +12,7 @@ from logster.format import format_record
 def main() -> None:
     parser = argparse.ArgumentParser(prog="logster")
     parser.add_argument("--no-color", action="store_true", help="Disable colors")
-    parser.parse_args()
+    args = parser.parse_args()
 
     try:
         for raw_line in sys.stdin:
@@ -27,7 +27,7 @@ def main() -> None:
                     output += "\n"
             else:
                 if isinstance(parsed, dict):
-                    output = f"{format_record(parsed)}\n"
+                    output = f"{format_record(parsed, use_color=not args.no_color)}\n"
                 else:
                     output = raw_line
                     if not output.endswith("\n"):

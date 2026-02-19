@@ -8,6 +8,9 @@ from typing import Any
 
 
 _TIME_RE = re.compile(r"(\d{2}:\d{2}:\d{2})")
+ANSI_RESET = "\033[0m"
+ANSI_METADATA = "\033[36m"
+ANSI_MESSAGE = "\033[97m"
 
 
 def format_time(ts: str) -> str:
@@ -27,7 +30,13 @@ def format_time(ts: str) -> str:
     return source[:8]
 
 
-def format_record(rec: dict[str, Any]) -> str:
+def _colorize(text: str, color_code: str, use_color: bool) -> str:
+    if not use_color or not text:
+        return text
+    return f"{color_code}{text}{ANSI_RESET}"
+
+
+def format_record(rec: dict[str, Any], *, use_color: bool = True) -> str:
     """Format a JSON log record into a compact one-line representation."""
     segments: list[str] = []
 
@@ -63,9 +72,10 @@ def format_record(rec: dict[str, Any]) -> str:
             message = str(rec[key])
             break
 
-    base = "".join(segments)
+    base = _colorize("".join(segments), ANSI_METADATA, use_color)
     if message:
+        colored_message = _colorize(message, ANSI_MESSAGE, use_color)
         if base:
-            return f"{base} {message}"
-        return message
+            return f"{base} {colored_message}"
+        return colored_message
     return base

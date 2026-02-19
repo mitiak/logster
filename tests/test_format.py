@@ -14,7 +14,7 @@ def test_format_record_example():
         "function": "query",
         "line": 17,
     }
-    got = format_record(rec)
+    got = format_record(rec, use_color=False)
     assert (
         got
         == '[10:12:05][INFO][/query][q="timing"][top_k=5][query:17] query_endpoint_started'
@@ -31,23 +31,30 @@ def test_missing_query_omits_query_segment():
         "function": "query",
         "line": 17,
     }
-    got = format_record(rec)
+    got = format_record(rec, use_color=False)
     assert '[q="' not in got
 
 
 def test_missing_timestamp_omits_time_segment():
     rec = {"event": "started", "level": "info", "path": "/query"}
-    got = format_record(rec)
+    got = format_record(rec, use_color=False)
     assert not got.startswith("[10:")
     assert got == "[INFO][/query] started"
 
 
 def test_missing_line_omits_location_segment():
     rec = {"event": "started", "function": "query"}
-    got = format_record(rec)
+    got = format_record(rec, use_color=False)
     assert "[query:" not in got
     assert got == "started"
 
 
 def test_timestamp_truncation():
     assert format_time("2026-02-19T10:12:05.497600Z") == "10:12:05"
+
+
+def test_color_scheme_uses_distinct_metadata_and_message_colors():
+    rec = {"level": "info", "event": "started"}
+    got = format_record(rec)
+    assert "\033[36m[INFO]\033[0m" in got
+    assert "\033[97mstarted\033[0m" in got
