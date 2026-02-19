@@ -1,0 +1,4 @@
+# logster configuration
+# Copy this file to your target project and tweak values as needed.
+
+no_color = false

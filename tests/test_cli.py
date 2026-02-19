@@ -1,5 +1,6 @@
 import subprocess
 import sys
+from pathlib import Path
 
 from logster import cli
 
@@ -39,3 +40,61 @@ def test_cli_exits_quietly_on_keyboard_interrupt(monkeypatch):
     monkeypatch.setattr(sys, "stdin", InterruptingStdin())
 
     cli.main()
+
+
+def test_cli_reads_logster_toml_config(tmp_path: Path):
+    (tmp_path / "logster.toml").write_text("no_color = true\n", encoding="utf-8")
+    data = '{"event":"hello","timestamp":"2026-02-19T10:12:05Z","level":"info"}\n'
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert "\x1b[" not in proc.stdout
+    assert proc.stdout.strip() == "[10:12:05][INFO] hello"
+
+
+def test_cli_reads_pyproject_tool_logster_config(tmp_path: Path):
+    (tmp_path / "pyproject.toml").write_text(
+        "[tool.logster]\nno_color = true\n",
+        encoding="utf-8",
+    )
+    data = '{"event":"hello","timestamp":"2026-02-19T10:12:05Z","level":"info"}\n'
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert "\x1b[" not in proc.stdout
+    assert proc.stdout.strip() == "[10:12:05][INFO] hello"
+
+
+def test_cli_prefers_logster_toml_over_pyproject(tmp_path: Path):
+    (tmp_path / "logster.toml").write_text("no_color = true\n", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        "[tool.logster]\nno_color = false\n",
+        encoding="utf-8",
+    )
+    data = '{"event":"hello","timestamp":"2026-02-19T10:12:05Z","level":"info"}\n'
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert "\x1b[" not in proc.stdout
+    assert proc.stdout.strip() == "[10:12:05][INFO] hello"

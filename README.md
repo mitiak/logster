@@ -29,6 +29,34 @@ Disable colors (MVP-safe flag):
 your_app 2>&1 | uv run logster --no-color
 ```
 
+## Configuration
+
+`logster` can load TOML configuration from:
+
+1. `--config /path/to/file.toml`
+2. `LOGSTER_CONFIG=/path/to/file.toml`
+3. `./logster.toml`
+4. `./pyproject.toml` under `[tool.logster]`
+
+Supported settings:
+
+```toml
+no_color = false
+```
+
+Example in `pyproject.toml`:
+
+```toml
+[tool.logster]
+no_color = true
+```
+
+Example standalone file (`logster.toml`):
+
+```toml
+no_color = true
+```
+
 ## Output format
 
 For JSON records, `logster` emits compact one-liners:

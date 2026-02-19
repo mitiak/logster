@@ -11,10 +11,14 @@ Versioning.
 - `logster-manage demo` command to print sample JSON input and its formatted
   one-line output.
 - Added `CHANGELOG.md` with Keep a Changelog structure for tracking updates.
+- External config loading via `logster.toml`, `pyproject.toml` (`[tool.logster]`),
+  `LOGSTER_CONFIG`, or `--config`.
 
 ### Changed
 - Expanded `README.md` with usage, output format, development commands, and
   documentation maintenance rules.
+- `--no-color` is now consistently applied during formatting, and can be set
+  via config (`no_color = true`).
 
 ## [0.1.0] - 2026-02-19
 

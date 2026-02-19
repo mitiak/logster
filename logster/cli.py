@@ -6,13 +6,23 @@ import argparse
 import json
 import sys
 
+from logster.config import load_config
 from logster.format import format_record
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="logster")
     parser.add_argument("--no-color", action="store_true", help="Disable colors")
+    parser.add_argument(
+        "--config",
+        help="Path to TOML config file (logster.toml or pyproject.toml)",
+    )
     args = parser.parse_args()
+    try:
+        config = load_config(config_path=args.config)
+    except (FileNotFoundError, ValueError) as err:
+        parser.error(str(err))
+    use_color = not (config.no_color or args.no_color)
 
     try:
         for raw_line in sys.stdin:
@@ -27,7 +37,7 @@ def main() -> None:
                     output += "\n"
             else:
                 if isinstance(parsed, dict):
-                    output = f"{format_record(parsed, use_color=not args.no_color)}\n"
+                    output = f"{format_record(parsed, use_color=use_color)}\n"
                 else:
                     output = raw_line
                     if not output.endswith("\n"):
