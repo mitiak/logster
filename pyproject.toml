@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "logster"
-version = "0.1.1"
+version = "0.1.2"
 description = "Compact formatter for JSON log lines in pipe mode"
 readme = "README.md"
 requires-python = ">=3.11"
