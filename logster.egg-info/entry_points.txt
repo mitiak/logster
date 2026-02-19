@@ -1,2 +1,3 @@
 [console_scripts]
 logster = logster.cli:main
+logster-manage = logster.manage:main

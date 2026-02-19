@@ -13,6 +13,7 @@ dependencies = []
 
 [project.scripts]
 logster = "logster.cli:main"
+logster-manage = "logster.manage:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

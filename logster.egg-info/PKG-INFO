@@ -27,3 +27,13 @@ Example with uvicorn:
 ```bash
 uvicorn app:app --reload 2>&1 | logster
 ```
+
+## Project management CLI
+
+```bash
+logster-manage info
+logster-manage test
+logster-manage install
+logster-manage clean
+logster-manage clean --dry-run
+```

@@ -3,6 +3,7 @@ pyproject.toml
 logster/__init__.py
 logster/cli.py
 logster/format.py
+logster/manage.py
 logster.egg-info/PKG-INFO
 logster.egg-info/SOURCES.txt
 logster.egg-info/dependency_links.txt
@@ -10,3 +11,4 @@ logster.egg-info/entry_points.txt
 logster.egg-info/top_level.txt
 tests/test_cli.py
 tests/test_format.py
+tests/test_manage_cli.py
