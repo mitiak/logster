@@ -65,6 +65,7 @@ file = "file"
 function = "function"
 line = "line"
 message_fields = ["event", "message", "msg"]
+main_line_fields = ["timestamp", "level", "file", "origin", "message"]
 ```
 
 Preset themes (`theme` or `color_scheme`) include:
@@ -131,8 +132,9 @@ Verbose mode emits 2 lines:
 {"all":"non-mandatory fields"}
 ```
 
-Line 1 is the main signal (same style as compact, mandatory fields only).
-Line 2 contains every JSON key/value not used by mandatory fields.
+Line 1 is the main signal. You can configure which fields appear there via
+`[fields].main_line_fields`.
+Line 2 contains every JSON key/value not rendered on line 1.
 In color mode, metadata keys and values use different dimmed colors.
 
 ## Project management CLI

@@ -10,6 +10,8 @@ Versioning.
 ### Added
 - Added `theme` as a preset selector in `logster.toml` (alias for
   `color_scheme`).
+- Added `[fields].main_line_fields` so projects can choose which fields are
+  rendered on the main line.
 
 ### Changed
 - Updated example `logster.toml` and README configuration docs to include
@@ -23,6 +25,8 @@ Versioning.
   `verbose_metadata_punctuation_color`.
 - Added `monokai-github-meta` preset (Monokai main line + GitHub-dark verbose
   metadata line).
+- Verbose metadata now always includes every JSON key that was not rendered on
+  the main line.
 
 ## [0.2.0] - 2026-02-19
 

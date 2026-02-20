@@ -156,6 +156,33 @@ def test_cli_reads_field_mapping_config(tmp_path: Path):
     )
 
 
+def test_cli_reads_main_line_fields_config(tmp_path: Path):
+    (tmp_path / "logster.toml").write_text(
+        (
+            "no_color = true\n"
+            'output_style = "verbose"\n'
+            "[fields]\n"
+            'main_line_fields = ["timestamp", "path", "message"]\n'
+        ),
+        encoding="utf-8",
+    )
+    data = (
+        '{"event":"configured","timestamp":"2026-02-19T10:12:05Z","level":"warning",'
+        '"path":"/query","request_id":"abc"}\n'
+    )
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert proc.stdout.strip() == '[10:12:05]["/query"] configured\n{"level":"warning","request_id":"abc"}'
+
+
 def test_cli_reads_color_scheme_preset_from_config(tmp_path: Path):
     (tmp_path / "logster.toml").write_text(
         'color_scheme = "dracula"\n',

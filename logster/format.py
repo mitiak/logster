@@ -48,49 +48,6 @@ def _colorize(text: str, color_name: str, use_color: bool, *, dim: bool = False)
     return f"{prefix}{text}{ANSI_RESET}"
 
 
-def _format_compact(
-    *,
-    time_text: str | None,
-    level_text: str | None,
-    file_text: str | None,
-    origin_text: str | None,
-) -> str:
-    segments: list[str] = []
-    if time_text is not None:
-        segments.append(f"[{time_text}]")
-    if level_text is not None:
-        segments.append(f"[{level_text}]")
-    if file_text is not None:
-        segments.append(f"[{file_text}]")
-    if origin_text is not None:
-        segments.append(f"[{origin_text}]")
-    return "".join(segments)
-
-
-def _format_compact_colored(
-    *,
-    time_text: str | None,
-    level_text: str | None,
-    file_text: str | None,
-    origin_text: str | None,
-    use_color: bool,
-    time_color: str,
-    level_color: str,
-    file_color: str,
-    origin_color: str,
-) -> str:
-    segments: list[str] = []
-    if time_text is not None:
-        segments.append(_colorize(f"[{time_text}]", time_color, use_color))
-    if level_text is not None:
-        segments.append(_colorize(f"[{level_text}]", level_color, use_color))
-    if file_text is not None:
-        segments.append(_colorize(f"[{file_text}]", file_color, use_color))
-    if origin_text is not None:
-        segments.append(_colorize(f"[{origin_text}]", origin_color, use_color))
-    return "".join(segments)
-
-
 def _format_metadata_json(
     value: Any,
     *,
@@ -185,50 +142,74 @@ def format_record(
             message_key = key
             break
 
-    if use_color:
-        base = _format_compact_colored(
-            time_text=time_text,
-            level_text=level_text,
-            file_text=file_text,
-            origin_text=origin_text,
-            use_color=use_color,
-            time_color=resolved_time_color,
-            level_color=resolved_level_color,
-            file_color=resolved_file_color,
-            origin_color=resolved_origin_color,
-        )
-    else:
-        first_line = _format_compact(
-            time_text=time_text,
-            level_text=level_text,
-            file_text=file_text,
-            origin_text=origin_text,
-        )
-        base = _colorize(first_line, metadata_color, use_color)
-    if message:
-        message_text = message
-        colored_message = _colorize(message_text, message_color, use_color)
-        if base:
-            main_line = f"{base} {colored_message}"
+    known_keys: dict[str, str] = {
+        "timestamp": mapping.timestamp,
+        "level": mapping.level,
+        "path": mapping.path,
+        "query": mapping.query,
+        "top_k": mapping.top_k,
+        "file": mapping.file,
+        "function": mapping.function,
+        "line": mapping.line,
+    }
+
+    bracket_segments: list[str] = []
+    main_message: str | None = None
+    rendered_main_keys: set[str] = set()
+    for main_field in mapping.main_line_fields:
+        if main_field == "timestamp" and time_text is not None:
+            bracket_segments.append(_colorize(f"[{time_text}]", resolved_time_color, use_color))
+            rendered_main_keys.add(mapping.timestamp)
+            continue
+        if main_field == "level" and level_text is not None:
+            bracket_segments.append(_colorize(f"[{level_text}]", resolved_level_color, use_color))
+            rendered_main_keys.add(mapping.level)
+            continue
+        if main_field == "file" and file_text is not None:
+            bracket_segments.append(_colorize(f"[{file_text}]", resolved_file_color, use_color))
+            rendered_main_keys.add(mapping.file)
+            continue
+        if main_field == "origin" and origin_text is not None:
+            bracket_segments.append(_colorize(f"[{origin_text}]", resolved_origin_color, use_color))
+            rendered_main_keys.add(mapping.line)
+            if function is not None:
+                rendered_main_keys.add(mapping.function)
+            elif file_name is not None:
+                rendered_main_keys.add(mapping.file)
+            continue
+        if main_field == "message" and message is not None:
+            main_message = _colorize(message, message_color, use_color)
+            if message_key is not None:
+                rendered_main_keys.add(message_key)
+            continue
+        if main_field in {"function", "line"}:
+            continue
+
+        resolved_key = known_keys.get(main_field, main_field)
+        raw_value = rec.get(resolved_key)
+        if raw_value is None:
+            continue
+        raw_label = known_keys.get(main_field)
+        if raw_label is None:
+            token = f"[{main_field}={json.dumps(raw_value, separators=(',', ':'))}]"
         else:
-            main_line = colored_message
+            token = f"[{json.dumps(raw_value, separators=(',', ':'))}]"
+        bracket_segments.append(_colorize(token, metadata_color, use_color))
+        rendered_main_keys.add(resolved_key)
+
+    base = "".join(bracket_segments)
+    if main_message is not None:
+        if base:
+            main_line = f"{base} {main_message}"
+        else:
+            main_line = main_message
     else:
         main_line = base
 
     if output_style == "compact":
         return main_line
 
-    mandatory_keys = {
-        mapping.timestamp,
-        mapping.level,
-        mapping.file,
-        mapping.function,
-        mapping.line,
-    }
-    if message_key is not None:
-        mandatory_keys.add(message_key)
-
-    metadata_obj = {key: value for key, value in rec.items() if key not in mandatory_keys}
+    metadata_obj = {key: value for key, value in rec.items() if key not in rendered_main_keys}
     metadata_line = _format_metadata_json(
         metadata_obj,
         use_color=use_color,

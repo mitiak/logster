@@ -24,3 +24,4 @@ file = "file"
 function = "function"
 line = "line"
 message_fields = ["event", "message", "msg"]
+main_line_fields = ["timestamp", "level", "file", "origin", "message"]

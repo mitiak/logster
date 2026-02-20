@@ -68,6 +68,7 @@ class FieldMapping:
     function: str = "function"
     line: str = "line"
     message_fields: tuple[str, ...] = ("event", "message", "msg")
+    main_line_fields: tuple[str, ...] = ("timestamp", "level", "file", "origin", "message")
 
 
 @dataclass(frozen=True)
@@ -242,6 +243,17 @@ def _normalize(data: dict[str, Any], source: Path) -> Config:
                 f"'fields.message_fields' must be a non-empty list of strings in {source}"
             )
         field_values["message_fields"] = tuple(raw_message_fields)
+
+    if "main_line_fields" in raw_fields:
+        raw_main_line_fields = raw_fields["main_line_fields"]
+        if (
+            not isinstance(raw_main_line_fields, list)
+            or any(not isinstance(item, str) or not item for item in raw_main_line_fields)
+        ):
+            raise ValueError(
+                f"'fields.main_line_fields' must be a list of non-empty strings in {source}"
+            )
+        field_values["main_line_fields"] = tuple(raw_main_line_fields)
 
     fields = FieldMapping(**field_values)
     return Config(

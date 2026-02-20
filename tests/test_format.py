@@ -107,6 +107,47 @@ def test_custom_field_mapping():
     assert got == "[10:12:05][WARNING][query:11] hello"
 
 
+def test_main_line_fields_can_be_customized():
+    rec = {
+        "timestamp": "2026-02-19T10:12:05Z",
+        "level": "info",
+        "path": "/query",
+        "top_k": 5,
+        "event": "started",
+    }
+    got = format_record(
+        rec,
+        use_color=False,
+        fields=FieldMapping(
+            main_line_fields=("timestamp", "path", "top_k", "message"),
+        ),
+    )
+    assert got == '[10:12:05]["/query"][5] started'
+
+
+def test_verbose_metadata_contains_only_non_main_line_fields():
+    rec = {
+        "timestamp": "2026-02-19T10:12:05Z",
+        "level": "info",
+        "path": "/query",
+        "top_k": 5,
+        "event": "started",
+        "request_id": "abc-123",
+    }
+    got = format_record(
+        rec,
+        use_color=False,
+        output_style="verbose",
+        fields=FieldMapping(
+            main_line_fields=("timestamp", "message"),
+        ),
+    )
+    assert (
+        got
+        == '[10:12:05] started\n{"level":"info","path":"/query","request_id":"abc-123","top_k":5}'
+    )
+
+
 def test_verbose_metadata_line_uses_subtle_color():
     rec = {
         "event": "started",
