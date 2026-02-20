@@ -67,13 +67,41 @@ def _format_compact(
     return "".join(segments)
 
 
+def _format_compact_colored(
+    *,
+    time_text: str | None,
+    level_text: str | None,
+    file_text: str | None,
+    origin_text: str | None,
+    use_color: bool,
+    time_color: str,
+    level_color: str,
+    file_color: str,
+    origin_color: str,
+) -> str:
+    segments: list[str] = []
+    if time_text is not None:
+        segments.append(_colorize(f"[{time_text}]", time_color, use_color))
+    if level_text is not None:
+        segments.append(_colorize(f"[{level_text}]", level_color, use_color))
+    if file_text is not None:
+        segments.append(_colorize(f"[{file_text}]", file_color, use_color))
+    if origin_text is not None:
+        segments.append(_colorize(f"[{origin_text}]", origin_color, use_color))
+    return "".join(segments)
+
+
 def _format_metadata_json(
     value: Any,
     *,
     use_color: bool,
     key_color: str,
     value_color: str,
+    punctuation_color: str,
 ) -> str:
+    def punct(text: str) -> str:
+        return _colorize(text, punctuation_color, use_color, dim=True)
+
     if isinstance(value, dict):
         parts: list[str] = []
         for key in sorted(value):
@@ -84,20 +112,22 @@ def _format_metadata_json(
                 use_color=use_color,
                 key_color=key_color,
                 value_color=value_color,
+                punctuation_color=punctuation_color,
             )
-            parts.append(f"{key_token}:{value_token}")
-        return "{" + ",".join(parts) + "}"
+            parts.append(f"{key_token}{punct(':')}{value_token}")
+        return f"{punct('{')}{punct(',').join(parts)}{punct('}')}"
     if isinstance(value, list):
-        inner = ",".join(
+        parts = [
             _format_metadata_json(
                 item,
                 use_color=use_color,
                 key_color=key_color,
                 value_color=value_color,
+                punctuation_color=punctuation_color,
             )
             for item in value
-        )
-        return "[" + inner + "]"
+        ]
+        return f"{punct('[')}{punct(',').join(parts)}{punct(']')}"
     rendered = json.dumps(value, separators=(",", ":"))
     return _colorize(rendered, value_color, use_color, dim=True)
 
@@ -107,16 +137,30 @@ def format_record(
     *,
     use_color: bool = True,
     output_style: str = DEFAULT_OUTPUT_STYLE,
+    time_color: str | None = None,
+    level_color: str | None = None,
+    file_color: str | None = None,
+    origin_color: str | None = None,
     metadata_color: str = DEFAULT_METADATA_COLOR,
     message_color: str = DEFAULT_MESSAGE_COLOR,
-    verbose_metadata_key_color: str = DEFAULT_METADATA_COLOR,
-    verbose_metadata_value_color: str = DEFAULT_MESSAGE_COLOR,
+    verbose_metadata_key_color: str | None = None,
+    verbose_metadata_value_color: str | None = None,
+    verbose_metadata_punctuation_color: str | None = None,
     fields: FieldMapping | None = None,
 ) -> str:
     """Format a JSON log record into a compact one-line representation."""
     if output_style not in {"compact", "verbose"}:
         raise ValueError(f"Unsupported output style: {output_style}")
     mapping = fields or FieldMapping()
+    resolved_time_color = time_color or metadata_color
+    resolved_level_color = level_color or metadata_color
+    resolved_file_color = file_color or metadata_color
+    resolved_origin_color = origin_color or metadata_color
+    resolved_verbose_key_color = verbose_metadata_key_color or metadata_color
+    resolved_verbose_value_color = verbose_metadata_value_color or message_color
+    resolved_verbose_punctuation_color = (
+        verbose_metadata_punctuation_color or metadata_color
+    )
 
     timestamp = rec.get(mapping.timestamp)
     time_text = format_time(timestamp) if isinstance(timestamp, str) else None
@@ -141,13 +185,26 @@ def format_record(
             message_key = key
             break
 
-    first_line = _format_compact(
-        time_text=time_text,
-        level_text=level_text,
-        file_text=file_text,
-        origin_text=origin_text,
-    )
-    base = _colorize(first_line, metadata_color, use_color)
+    if use_color:
+        base = _format_compact_colored(
+            time_text=time_text,
+            level_text=level_text,
+            file_text=file_text,
+            origin_text=origin_text,
+            use_color=use_color,
+            time_color=resolved_time_color,
+            level_color=resolved_level_color,
+            file_color=resolved_file_color,
+            origin_color=resolved_origin_color,
+        )
+    else:
+        first_line = _format_compact(
+            time_text=time_text,
+            level_text=level_text,
+            file_text=file_text,
+            origin_text=origin_text,
+        )
+        base = _colorize(first_line, metadata_color, use_color)
     if message:
         message_text = message
         colored_message = _colorize(message_text, message_color, use_color)
@@ -175,8 +232,9 @@ def format_record(
     metadata_line = _format_metadata_json(
         metadata_obj,
         use_color=use_color,
-        key_color=verbose_metadata_key_color,
-        value_color=verbose_metadata_value_color,
+        key_color=resolved_verbose_key_color,
+        value_color=resolved_verbose_value_color,
+        punctuation_color=resolved_verbose_punctuation_color,
     )
     if main_line:
         return f"{main_line}\n{metadata_line}"

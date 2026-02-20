@@ -46,9 +46,14 @@ output_style = "compact" # compact | verbose
 theme = "default" # preferred preset selector (alias of color_scheme)
 color_scheme = "default"
 metadata_color = "cyan"
+time_color = "cyan"
+level_color = "cyan"
+file_color = "cyan"
+origin_color = "cyan"
 message_color = "bright_white"
 verbose_metadata_key_color = "cyan"
 verbose_metadata_value_color = "bright_white"
+verbose_metadata_punctuation_color = "cyan"
 
 [fields]
 timestamp = "timestamp"
@@ -64,9 +69,14 @@ message_fields = ["event", "message", "msg"]
 
 Preset themes (`theme` or `color_scheme`) include:
 `default`, `dracula`, `nord`, `gruvbox`, `solarized-dark`, `solarized-light`,
-`monokai`, `one-dark`, `tokyo-night`, `catppuccin-mocha`, `github-dark`.
+`monokai`, `one-dark`, `tokyo-night`, `catppuccin-mocha`, `github-dark`,
+`monokai-github-meta`.
 
 If `metadata_color` / `message_color` are set, they override the preset values.
+Fine-grained overrides (`time_color`, `level_color`, `file_color`,
+`origin_color`, `verbose_metadata_key_color`,
+`verbose_metadata_value_color`, `verbose_metadata_punctuation_color`) take
+priority over preset and fallback colors.
 
 Supported custom color names:
 `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`,

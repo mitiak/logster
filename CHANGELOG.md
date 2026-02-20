@@ -17,6 +17,12 @@ Versioning.
 - Verbose metadata line now outputs raw JSON only (without `metadata:` prefix).
 - Verbose metadata keys and values now use different configurable colors.
 - Added `--verbose` option to `logster-manage demo --list-color-schemes`.
+- Added fine-grained color configuration for all rendered parts: `time_color`,
+  `level_color`, `file_color`, `origin_color`, `message_color`,
+  `verbose_metadata_key_color`, `verbose_metadata_value_color`,
+  `verbose_metadata_punctuation_color`.
+- Added `monokai-github-meta` preset (Monokai main line + GitHub-dark verbose
+  metadata line).
 
 ## [0.2.0] - 2026-02-19
 

@@ -115,6 +115,53 @@ def test_verbose_metadata_line_uses_subtle_color():
         "path": "/query",
     }
     got = format_record(rec, output_style="verbose")
-    assert "\033[36m[10:12:05][INFO]\033[0m \033[97mstarted\033[0m" in got
+    assert "\033[36m[10:12:05]\033[0m" in got
+    assert "\033[36m[INFO]\033[0m" in got
+    assert "\033[97mstarted\033[0m" in got
     assert "\033[2m\033[36m\"path\"\033[0m" in got
     assert "\033[2m\033[97m\"/query\"\033[0m" in got
+
+
+def test_format_record_supports_all_line_one_color_overrides():
+    rec = {
+        "event": "started",
+        "timestamp": "2026-02-19T10:12:05Z",
+        "level": "info",
+        "file": "embedding.py",
+        "function": "embed_text",
+        "line": 24,
+    }
+    got = format_record(
+        rec,
+        time_color="red",
+        level_color="green",
+        file_color="blue",
+        origin_color="magenta",
+        message_color="yellow",
+    )
+    assert "\033[31m[10:12:05]\033[0m" in got
+    assert "\033[32m[INFO]\033[0m" in got
+    assert "\033[34m[embedding.py]\033[0m" in got
+    assert "\033[35m[embed_text:24]\033[0m" in got
+    assert "\033[33mstarted\033[0m" in got
+
+
+def test_verbose_metadata_supports_key_value_and_punctuation_colors():
+    rec = {
+        "event": "started",
+        "timestamp": "2026-02-19T10:12:05Z",
+        "level": "info",
+        "path": "/query",
+        "top_k": 5,
+    }
+    got = format_record(
+        rec,
+        output_style="verbose",
+        verbose_metadata_key_color="red",
+        verbose_metadata_value_color="green",
+        verbose_metadata_punctuation_color="blue",
+    )
+    assert "\033[2m\033[34m{\033[0m" in got
+    assert "\033[2m\033[31m\"path\"\033[0m" in got
+    assert "\033[2m\033[32m\"/query\"\033[0m" in got
+    assert "\033[2m\033[34m:\033[0m" in got

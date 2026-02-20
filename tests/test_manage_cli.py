@@ -51,7 +51,7 @@ def test_manage_test_uses_pytest_when_uv_missing(monkeypatch: pytest.MonkeyPatch
 
 
 def test_manage_demo_prints_expected_output(capsys: pytest.CaptureFixture[str]) -> None:
-    code = manage._demo()
+    code = manage._demo(no_color=True, output_style_override="compact")
     out = capsys.readouterr().out
     assert code == 0
     assert "Input JSON:" in out
@@ -97,5 +97,5 @@ def test_manage_demo_lists_all_color_schemes_in_verbose_mode(
     out = capsys.readouterr().out
     assert code == 0
     assert "Available color schemes:" in out
-    assert "\n{" in out
+    assert "\"path\"" in out
     assert "\n\n" in out

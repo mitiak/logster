@@ -9,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from logster.config import COLOR_SCHEME_PRESETS, load_config
+from logster.config import COLOR_SCHEME_PRESETS, COLOR_SCHEME_VERBOSE_PRESETS, load_config
 from logster.format import format_record
 
 
@@ -94,10 +94,15 @@ def _demo(
             sample,
             use_color=not (config.no_color or no_color),
             output_style=output_style,
+            time_color=config.time_color,
+            level_color=config.level_color,
+            file_color=config.file_color,
+            origin_color=config.origin_color,
             metadata_color=config.metadata_color,
             message_color=config.message_color,
             verbose_metadata_key_color=config.verbose_metadata_key_color,
             verbose_metadata_value_color=config.verbose_metadata_value_color,
+            verbose_metadata_punctuation_color=config.verbose_metadata_punctuation_color,
             fields=config.fields,
         )
     )
@@ -117,14 +122,27 @@ def _demo_color_schemes(*, verbose: bool = False) -> int:
     }
     print("Available color schemes:")
     for scheme_name, (metadata_color, message_color) in sorted(COLOR_SCHEME_PRESETS.items()):
+        (
+            verbose_key_color,
+            verbose_value_color,
+            verbose_punctuation_color,
+        ) = COLOR_SCHEME_VERBOSE_PRESETS.get(
+            scheme_name,
+            (metadata_color, message_color, metadata_color),
+        )
         preview = format_record(
             sample,
             use_color=True,
             output_style="verbose" if verbose else "compact",
+            time_color=metadata_color,
+            level_color=metadata_color,
+            file_color=metadata_color,
+            origin_color=metadata_color,
             metadata_color=metadata_color,
             message_color=message_color,
-            verbose_metadata_key_color=metadata_color,
-            verbose_metadata_value_color=message_color,
+            verbose_metadata_key_color=verbose_key_color,
+            verbose_metadata_value_color=verbose_value_color,
+            verbose_metadata_punctuation_color=verbose_punctuation_color,
         )
         preview_lines = preview.splitlines()
         print(f"{scheme_name}:")

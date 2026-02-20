@@ -172,7 +172,8 @@ def test_cli_reads_color_scheme_preset_from_config(tmp_path: Path):
         cwd=tmp_path,
     )
 
-    assert "\033[95m[10:12:05][INFO]\033[0m" in proc.stdout
+    assert "\033[95m[10:12:05]\033[0m" in proc.stdout
+    assert "\033[95m[INFO]\033[0m" in proc.stdout
     assert "\033[96mhello\033[0m" in proc.stdout
 
 
@@ -192,7 +193,8 @@ def test_cli_allows_custom_color_overrides(tmp_path: Path):
         cwd=tmp_path,
     )
 
-    assert "\033[32m[10:12:05][INFO]\033[0m" in proc.stdout
+    assert "\033[32m[10:12:05]\033[0m" in proc.stdout
+    assert "\033[32m[INFO]\033[0m" in proc.stdout
     assert "\033[34mhello\033[0m" in proc.stdout
 
 
@@ -212,7 +214,8 @@ def test_cli_reads_theme_from_config(tmp_path: Path):
         cwd=tmp_path,
     )
 
-    assert "\033[94m[10:12:05][INFO]\033[0m" in proc.stdout
+    assert "\033[94m[10:12:05]\033[0m" in proc.stdout
+    assert "\033[94m[INFO]\033[0m" in proc.stdout
     assert "\033[37mhello\033[0m" in proc.stdout
 
 
@@ -232,5 +235,75 @@ def test_cli_theme_overrides_color_scheme(tmp_path: Path):
         cwd=tmp_path,
     )
 
-    assert "\033[32m[10:12:05][INFO]\033[0m" in proc.stdout
+    assert "\033[32m[10:12:05]\033[0m" in proc.stdout
+    assert "\033[32m[INFO]\033[0m" in proc.stdout
     assert "\033[93mhello\033[0m" in proc.stdout
+
+
+def test_cli_allows_granular_color_configuration(tmp_path: Path):
+    (tmp_path / "logster.toml").write_text(
+        (
+            'time_color = "red"\n'
+            'level_color = "green"\n'
+            'file_color = "blue"\n'
+            'origin_color = "magenta"\n'
+            'message_color = "yellow"\n'
+            'output_style = "verbose"\n'
+            'verbose_metadata_key_color = "bright_cyan"\n'
+            'verbose_metadata_value_color = "bright_white"\n'
+            'verbose_metadata_punctuation_color = "bright_black"\n'
+        ),
+        encoding="utf-8",
+    )
+    data = (
+        '{"event":"embedding_text_started","timestamp":"2026-02-19T10:12:05Z",'
+        '"level":"info","file":"embedding.py","function":"embed_text","line":24,'
+        '"path":"/embed"}\n'
+    )
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert "\033[31m[10:12:05]\033[0m" in proc.stdout
+    assert "\033[32m[INFO]\033[0m" in proc.stdout
+    assert "\033[34m[embedding.py]\033[0m" in proc.stdout
+    assert "\033[35m[embed_text:24]\033[0m" in proc.stdout
+    assert "\033[33membedding_text_started\033[0m" in proc.stdout
+    assert "\033[2m\033[96m\"path\"\033[0m" in proc.stdout
+    assert "\033[2m\033[97m\"/embed\"\033[0m" in proc.stdout
+    assert "\033[2m\033[90m{\033[0m" in proc.stdout
+
+
+def test_cli_supports_monokai_github_meta_scheme(tmp_path: Path):
+    (tmp_path / "logster.toml").write_text(
+        'color_scheme = "monokai-github-meta"\noutput_style = "verbose"\n',
+        encoding="utf-8",
+    )
+    data = (
+        '{"event":"embedding_text_started","timestamp":"2026-02-19T10:12:05Z",'
+        '"level":"info","file":"embedding.py","function":"embed_text","line":24,'
+        '"path":"/embed"}\n'
+    )
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    # Main line follows monokai.
+    assert "\033[32m[10:12:05]\033[0m" in proc.stdout
+    assert "\033[32m[INFO]\033[0m" in proc.stdout
+    assert "\033[93membedding_text_started\033[0m" in proc.stdout
+    # Verbose metadata follows github-dark.
+    assert "\033[2m\033[90m\"path\"\033[0m" in proc.stdout
+    assert "\033[2m\033[37m\"/embed\"\033[0m" in proc.stdout

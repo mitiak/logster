@@ -45,10 +45,16 @@ COLOR_SCHEME_PRESETS = {
     "tokyo-night": ("bright_cyan", "purple"),
     "catppuccin-mocha": ("pink", "bright_blue"),
     "github-dark": ("bright_black", "white"),
+    "monokai-github-meta": ("green", "bright_yellow"),
+}
+COLOR_SCHEME_VERBOSE_PRESETS = {
+    "github-dark": ("bright_black", "white", "bright_black"),
+    "monokai-github-meta": ("bright_black", "white", "bright_black"),
 }
 DEFAULT_METADATA_COLOR, DEFAULT_MESSAGE_COLOR = COLOR_SCHEME_PRESETS[DEFAULT_COLOR_SCHEME]
 DEFAULT_VERBOSE_METADATA_KEY_COLOR = DEFAULT_METADATA_COLOR
 DEFAULT_VERBOSE_METADATA_VALUE_COLOR = DEFAULT_MESSAGE_COLOR
+DEFAULT_VERBOSE_METADATA_PUNCTUATION_COLOR = DEFAULT_METADATA_COLOR
 
 
 @dataclass(frozen=True)
@@ -70,10 +76,15 @@ class Config:
     output_style: str = DEFAULT_OUTPUT_STYLE
     theme: str = DEFAULT_COLOR_SCHEME
     color_scheme: str = DEFAULT_COLOR_SCHEME
+    time_color: str = DEFAULT_METADATA_COLOR
+    level_color: str = DEFAULT_METADATA_COLOR
+    file_color: str = DEFAULT_METADATA_COLOR
+    origin_color: str = DEFAULT_METADATA_COLOR
     metadata_color: str = DEFAULT_METADATA_COLOR
     message_color: str = DEFAULT_MESSAGE_COLOR
     verbose_metadata_key_color: str = DEFAULT_VERBOSE_METADATA_KEY_COLOR
     verbose_metadata_value_color: str = DEFAULT_VERBOSE_METADATA_VALUE_COLOR
+    verbose_metadata_punctuation_color: str = DEFAULT_VERBOSE_METADATA_PUNCTUATION_COLOR
     fields: FieldMapping = FieldMapping()
 
 
@@ -114,12 +125,52 @@ def _normalize(data: dict[str, Any], source: Path) -> Config:
             f"'theme' must be one of [{allowed}] in {source}"
         )
     default_metadata_color, default_message_color = COLOR_SCHEME_PRESETS[theme]
+    (
+        default_verbose_metadata_key_color,
+        default_verbose_metadata_value_color,
+        default_verbose_metadata_punctuation_color,
+    ) = COLOR_SCHEME_VERBOSE_PRESETS.get(
+        theme,
+        (
+            default_metadata_color,
+            default_message_color,
+            default_metadata_color,
+        ),
+    )
 
     metadata_color = data.get("metadata_color", default_metadata_color)
     if not isinstance(metadata_color, str) or metadata_color not in ANSI_COLOR_CODES:
         allowed = ", ".join(sorted(ANSI_COLOR_CODES))
         raise ValueError(
             f"'metadata_color' must be one of [{allowed}] in {source}"
+        )
+
+    time_color = data.get("time_color", metadata_color)
+    if not isinstance(time_color, str) or time_color not in ANSI_COLOR_CODES:
+        allowed = ", ".join(sorted(ANSI_COLOR_CODES))
+        raise ValueError(
+            f"'time_color' must be one of [{allowed}] in {source}"
+        )
+
+    level_color = data.get("level_color", metadata_color)
+    if not isinstance(level_color, str) or level_color not in ANSI_COLOR_CODES:
+        allowed = ", ".join(sorted(ANSI_COLOR_CODES))
+        raise ValueError(
+            f"'level_color' must be one of [{allowed}] in {source}"
+        )
+
+    file_color = data.get("file_color", metadata_color)
+    if not isinstance(file_color, str) or file_color not in ANSI_COLOR_CODES:
+        allowed = ", ".join(sorted(ANSI_COLOR_CODES))
+        raise ValueError(
+            f"'file_color' must be one of [{allowed}] in {source}"
+        )
+
+    origin_color = data.get("origin_color", metadata_color)
+    if not isinstance(origin_color, str) or origin_color not in ANSI_COLOR_CODES:
+        allowed = ", ".join(sorted(ANSI_COLOR_CODES))
+        raise ValueError(
+            f"'origin_color' must be one of [{allowed}] in {source}"
         )
 
     message_color = data.get("message_color", default_message_color)
@@ -131,7 +182,7 @@ def _normalize(data: dict[str, Any], source: Path) -> Config:
 
     verbose_metadata_key_color = data.get(
         "verbose_metadata_key_color",
-        metadata_color,
+        default_verbose_metadata_key_color,
     )
     if (
         not isinstance(verbose_metadata_key_color, str)
@@ -144,7 +195,7 @@ def _normalize(data: dict[str, Any], source: Path) -> Config:
 
     verbose_metadata_value_color = data.get(
         "verbose_metadata_value_color",
-        message_color,
+        default_verbose_metadata_value_color,
     )
     if (
         not isinstance(verbose_metadata_value_color, str)
@@ -153,6 +204,19 @@ def _normalize(data: dict[str, Any], source: Path) -> Config:
         allowed = ", ".join(sorted(ANSI_COLOR_CODES))
         raise ValueError(
             f"'verbose_metadata_value_color' must be one of [{allowed}] in {source}"
+        )
+
+    verbose_metadata_punctuation_color = data.get(
+        "verbose_metadata_punctuation_color",
+        default_verbose_metadata_punctuation_color,
+    )
+    if (
+        not isinstance(verbose_metadata_punctuation_color, str)
+        or verbose_metadata_punctuation_color not in ANSI_COLOR_CODES
+    ):
+        allowed = ", ".join(sorted(ANSI_COLOR_CODES))
+        raise ValueError(
+            f"'verbose_metadata_punctuation_color' must be one of [{allowed}] in {source}"
         )
 
     raw_fields = data.get("fields", {})
@@ -185,10 +249,15 @@ def _normalize(data: dict[str, Any], source: Path) -> Config:
         output_style=output_style,
         theme=theme,
         color_scheme=color_scheme,
+        time_color=time_color,
+        level_color=level_color,
+        file_color=file_color,
+        origin_color=origin_color,
         metadata_color=metadata_color,
         message_color=message_color,
         verbose_metadata_key_color=verbose_metadata_key_color,
         verbose_metadata_value_color=verbose_metadata_value_color,
+        verbose_metadata_punctuation_color=verbose_metadata_punctuation_color,
         fields=fields,
     )
 
