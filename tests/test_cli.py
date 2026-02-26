@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from logster import cli
+from logster import __version__
 
 
 def test_cli_formats_json_and_passthrough_non_json(tmp_path: Path):
@@ -30,6 +31,47 @@ def test_cli_formats_json_and_passthrough_non_json(tmp_path: Path):
         == "[10:12:05][INFO][query.py][query:17] query_endpoint_started"
     )
     assert out_lines[1] == plain_line
+
+
+def test_cli_prints_version() -> None:
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli", "--version"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    assert proc.stdout.strip() == f"logster {__version__}"
+    assert proc.stderr == ""
+
+
+def test_cli_formats_json_payloads_from_docker_compose_logs(tmp_path: Path):
+    compose_json_line = (
+        'cdrmind-raggy          | {"method":"GET","status_code":200,"latency_ms":1.64,'
+        '"file":"health.py","function":"health_check","line":10,'
+        '"event":"request_completed","request_id":"4f7ed318-e34f-44b8-a22b-cb9c8ab523c3",'
+        '"path":"/health","timestamp":"2026-02-26T11:04:00.757676Z","level":"info"}'
+    )
+    compose_plain_line = (
+        'cdrmind-raggy          | INFO:     127.0.0.1:58920 - "GET /health HTTP/1.1" 200 OK'
+    )
+    data = f"{compose_json_line}\n{compose_plain_line}\n"
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli", "--no-color"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    out_lines = proc.stdout.splitlines()
+    assert (
+        out_lines[0]
+        == "cdrmind-raggy          | [11:04:00][INFO][health.py][health_check:10] request_completed"
+    )
+    assert out_lines[1] == compose_plain_line
 
 
 def test_cli_exits_quietly_on_keyboard_interrupt(monkeypatch):

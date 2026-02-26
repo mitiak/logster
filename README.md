@@ -4,6 +4,8 @@
 lines to `stdout`.
 
 It focuses on JSON-per-line logs and keeps non-JSON lines unchanged.
+It also supports JSON payloads prefixed by `docker-compose logs` service labels
+(`service-name | {...}`).
 
 ## Install
 
@@ -27,6 +29,18 @@ Disable colors (MVP-safe flag):
 
 ```bash
 your_app 2>&1 | uv run logster --no-color
+```
+
+Show installed version:
+
+```bash
+uv run logster --version
+```
+
+`docker-compose logs` / `docker compose logs` example:
+
+```bash
+docker compose logs -f | uv run logster
 ```
 
 ## Configuration

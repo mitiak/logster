@@ -7,11 +7,16 @@ Versioning.
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-02-26
+
 ### Added
 - Added `theme` as a preset selector in `logster.toml` (alias for
   `color_scheme`).
 - Added `[fields].main_line_fields` so projects can choose which fields are
   rendered on the main line.
+- Added parsing support for JSON payloads prefixed by `docker-compose logs`
+  service labels (for example `service-name | {"event":"..."}`).
+- Added `--version` option to `logster` CLI.
 
 ### Changed
 - Updated example `logster.toml` and README configuration docs to include

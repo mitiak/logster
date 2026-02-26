@@ -6,12 +6,28 @@ import argparse
 import json
 import sys
 
+from logster import __version__
 from logster.config import load_config
 from logster.format import format_record
 
 
+def _split_compose_prefix(line: str) -> tuple[str, str]:
+    """Split `docker-compose logs` prefix (`service | `) from the payload."""
+    prefix, sep, payload = line.partition(" | ")
+    if sep and prefix.strip():
+        return f"{prefix}{sep}", payload
+    return "", line
+
+
+def _with_newline(line: str) -> str:
+    if line.endswith("\n"):
+        return line
+    return f"{line}\n"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="logster")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--no-color", action="store_true", help="Disable colors")
     parser.add_argument(
         "--config",
@@ -27,23 +43,39 @@ def main() -> None:
     try:
         for raw_line in sys.stdin:
             parse_line = raw_line.rstrip("\n")
+            compose_prefix, parse_line = _split_compose_prefix(parse_line)
             output: str
 
             try:
                 parsed = json.loads(parse_line)
             except json.JSONDecodeError:
-                output = raw_line
-                if not output.endswith("\n"):
-                    output += "\n"
+                output = _with_newline(raw_line)
             else:
                 if isinstance(parsed, dict):
-                    output = (
-                        f"{format_record(parsed, use_color=use_color, output_style=config.output_style, time_color=config.time_color, level_color=config.level_color, file_color=config.file_color, origin_color=config.origin_color, metadata_color=config.metadata_color, message_color=config.message_color, verbose_metadata_key_color=config.verbose_metadata_key_color, verbose_metadata_value_color=config.verbose_metadata_value_color, verbose_metadata_punctuation_color=config.verbose_metadata_punctuation_color, fields=config.fields)}\n"
+                    formatted = format_record(
+                        parsed,
+                        use_color=use_color,
+                        output_style=config.output_style,
+                        time_color=config.time_color,
+                        level_color=config.level_color,
+                        file_color=config.file_color,
+                        origin_color=config.origin_color,
+                        metadata_color=config.metadata_color,
+                        message_color=config.message_color,
+                        verbose_metadata_key_color=config.verbose_metadata_key_color,
+                        verbose_metadata_value_color=config.verbose_metadata_value_color,
+                        verbose_metadata_punctuation_color=config.verbose_metadata_punctuation_color,
+                        fields=config.fields,
                     )
+                    if compose_prefix:
+                        output = "".join(
+                            f"{compose_prefix}{line}\n"
+                            for line in formatted.splitlines()
+                        )
+                    else:
+                        output = f"{formatted}\n"
                 else:
-                    output = raw_line
-                    if not output.endswith("\n"):
-                        output += "\n"
+                    output = _with_newline(raw_line)
 
             sys.stdout.write(output)
             sys.stdout.flush()
