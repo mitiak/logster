@@ -30,6 +30,11 @@ def main() -> None:
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--no-color", action="store_true", help="Disable colors")
     parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Use verbose output style (overrides config)",
+    )
+    parser.add_argument(
         "--config",
         help="Path to TOML config file (logster.toml or pyproject.toml)",
     )
@@ -39,6 +44,7 @@ def main() -> None:
     except (FileNotFoundError, ValueError) as err:
         parser.error(str(err))
     use_color = not (config.no_color or args.no_color)
+    output_style = "verbose" if args.verbose else config.output_style
 
     try:
         for raw_line in sys.stdin:
@@ -55,7 +61,7 @@ def main() -> None:
                     formatted = format_record(
                         parsed,
                         use_color=use_color,
-                        output_style=config.output_style,
+                        output_style=output_style,
                         time_color=config.time_color,
                         level_color=config.level_color,
                         file_color=config.file_color,

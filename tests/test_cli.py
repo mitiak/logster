@@ -162,6 +162,41 @@ def test_cli_reads_output_style_verbose_config(tmp_path: Path):
     assert proc.stdout.strip() == "[10:12:05][INFO] hello world\n{}"
 
 
+def test_cli_verbose_flag_enables_verbose_output(tmp_path: Path):
+    data = '{"event":"hello world","timestamp":"2026-02-19T10:12:05Z","level":"info"}\n'
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli", "--no-color", "--verbose"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert proc.stdout.strip() == "[10:12:05][INFO] hello world\n{}"
+
+
+def test_cli_verbose_flag_applies_to_compose_prefixed_json(tmp_path: Path):
+    data = (
+        'cdrmind-raggy          | {"event":"hello world","timestamp":"2026-02-19T10:12:05Z","level":"info"}\n'
+    )
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli", "--no-color", "--verbose"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert (
+        proc.stdout.strip()
+        == 'cdrmind-raggy          | [10:12:05][INFO] hello world\ncdrmind-raggy          | {}'
+    )
+
+
 def test_cli_reads_field_mapping_config(tmp_path: Path):
     (tmp_path / "logster.toml").write_text(
         (

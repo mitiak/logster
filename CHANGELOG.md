@@ -7,6 +7,12 @@ Versioning.
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-02-26
+
+### Added
+- Added `--verbose` option to `logster` CLI to force verbose (2-line) output
+  at runtime, including for `docker compose logs`-prefixed JSON lines.
+
 ## [0.1.7] - 2026-02-26
 
 ### Added

@@ -37,6 +37,12 @@ Show installed version:
 uv run logster --version
 ```
 
+Force verbose (2-line) output at runtime:
+
+```bash
+your_app 2>&1 | uv run logster --verbose
+```
+
 `docker-compose logs` / `docker compose logs` example:
 
 ```bash
