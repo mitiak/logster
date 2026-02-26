@@ -74,6 +74,41 @@ def test_cli_formats_json_payloads_from_docker_compose_logs(tmp_path: Path):
     assert out_lines[1] == compose_plain_line
 
 
+def test_cli_highlights_warning_and_error_in_passthrough_lines(tmp_path: Path):
+    data = (
+        'cdrmind-taskonaut-soc  | [13:33:49][WARNING][service.py] tool.execute.failed\n'
+        'cdrmind-api            | [13:33:49][ERROR] agents.summarize.failed\n'
+    )
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert "\033[33mWARNING\033[0m" in proc.stdout
+    assert "\033[31mERROR\033[0m" in proc.stdout
+
+
+def test_cli_does_not_highlight_passthrough_levels_with_no_color(tmp_path: Path):
+    data = 'cdrmind-api            | [13:33:49][ERROR] agents.summarize.failed\n'
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "logster.cli", "--no-color"],
+        input=data,
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert proc.stdout.strip() == data.strip()
+    assert "\033[" not in proc.stdout
+
+
 def test_cli_exits_quietly_on_keyboard_interrupt(monkeypatch):
     class InterruptingStdin:
         def __iter__(self):

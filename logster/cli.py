@@ -4,11 +4,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 
 from logster import __version__
+from logster.config import ANSI_COLOR_CODES
 from logster.config import load_config
 from logster.format import format_record
+
+
+ANSI_RESET = "\033[0m"
+LEVEL_TOKEN_COLORS = {
+    "WARNING": "yellow",
+    "ERROR": "red",
+}
 
 
 def _split_compose_prefix(line: str) -> tuple[str, str]:
@@ -23,6 +32,21 @@ def _with_newline(line: str) -> str:
     if line.endswith("\n"):
         return line
     return f"{line}\n"
+
+
+def _highlight_passthrough_levels(line: str, *, use_color: bool) -> str:
+    if not use_color:
+        return line
+
+    highlighted = line
+    for level_token, color_name in LEVEL_TOKEN_COLORS.items():
+        color_code = ANSI_COLOR_CODES[color_name]
+        highlighted = re.sub(
+            rf"\b{level_token}\b",
+            lambda match: f"{color_code}{match.group(0)}{ANSI_RESET}",
+            highlighted,
+        )
+    return highlighted
 
 
 def main() -> None:
@@ -55,7 +79,9 @@ def main() -> None:
             try:
                 parsed = json.loads(parse_line)
             except json.JSONDecodeError:
-                output = _with_newline(raw_line)
+                output = _with_newline(
+                    _highlight_passthrough_levels(raw_line, use_color=use_color)
+                )
             else:
                 if isinstance(parsed, dict):
                     formatted = format_record(

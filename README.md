@@ -6,6 +6,8 @@ lines to `stdout`.
 It focuses on JSON-per-line logs and keeps non-JSON lines unchanged.
 It also supports JSON payloads prefixed by `docker-compose logs` service labels
 (`service-name | {...}`).
+For non-JSON pass-through lines, `WARNING` and `ERROR` tokens are highlighted
+when color is enabled.
 
 ## Install
 

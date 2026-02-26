@@ -7,6 +7,13 @@ Versioning.
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-02-26
+
+### Added
+- Added pass-through level highlighting in `logster` CLI so non-JSON `WARNING`
+  tokens render in yellow and `ERROR` tokens render in red when color output is
+  enabled.
+
 ## [0.1.8] - 2026-02-26
 
 ### Added
